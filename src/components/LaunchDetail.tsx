@@ -495,7 +495,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
     if ( connectedAddress) {
       actions.push(
         <ActionButton
-        disabled={!isOperator || currentState !== LaunchState.SETUP}
+        disabled={!isOperator || currentState !== LaunchState.FINALIZED}
           key="start-auction"
           label="Start Auction"
           functionName="startAuction"
@@ -509,7 +509,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
     if ( connectedAddress) {
       actions.push(
         <ActionButton
-        disabled={!isOperator || currentState !== LaunchState.AUCTION_ACTIVE}
+        disabled={!isOperator || currentState !== LaunchState.SETUP}
           key="finalize-setup"
           label="Finalize Setup"
           functionName="finalizeSetup"

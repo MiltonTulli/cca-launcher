@@ -32,7 +32,11 @@ import {
   Info,
   Clock,
   Settings2,
+  Save,
+  Link as LinkIcon,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { saveDraft } from "@/lib/ipfs";
 
 interface LaunchResult {
   launchId: bigint;
@@ -41,13 +45,26 @@ interface LaunchResult {
   params: LaunchFormValues;
 }
 
-export function LaunchForm() {
+interface LaunchFormProps {
+  /** Pre-fill the form with these values (e.g. from a draft) */
+  initialValues?: Partial<LaunchFormValues>;
+  /** "create" = normal mode, "draft" = launched from a draft page */
+  mode?: "create" | "draft";
+}
+
+export function LaunchForm({ initialValues, mode = "create" }: LaunchFormProps) {
   const { address } = useAccount();
   const chainId = useChainId();
-  const [formValues, setFormValues] = useState<LaunchFormValues>(DEFAULT_FORM_VALUES);
+  const router = useRouter();
+  const [formValues, setFormValues] = useState<LaunchFormValues>({
+    ...DEFAULT_FORM_VALUES,
+    ...initialValues,
+  });
   const [errors, setErrors] = useState<Partial<Record<keyof LaunchFormValues, string>>>({});
   const [launchResult, setLaunchResult] = useState<LaunchResult | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
 
   const contractAddress = TALLY_LAUNCH_FACTORY_ADDRESSES[chainId];
 
@@ -208,6 +225,27 @@ export function LaunchForm() {
     });
   }, [formValues, validateForm, contractAddress, writeContract]);
 
+  const handleSaveDraft = useCallback(async () => {
+    setDraftError(null);
+    setIsSavingDraft(true);
+    try {
+      const [cid] = await Promise.all([
+        saveDraft({
+          formValues: formValues as unknown as Record<string, string>,
+          chainId,
+          createdAt: Date.now(),
+          creator: address ?? undefined,
+        }),
+        // Minimum visible delay so the user sees the saving state
+        new Promise((r) => setTimeout(r, 800)),
+      ]);
+      router.push(`/draft/${cid}`);
+    } catch (err) {
+      setDraftError(err instanceof Error ? err.message : "Failed to save draft");
+      setIsSavingDraft(false);
+    }
+  }, [formValues, chainId, address, router]);
+
   // Update launch result when transaction succeeds
   useEffect(() => {
     if (isSuccess && receipt && hash && !launchResult) {
@@ -272,29 +310,33 @@ export function LaunchForm() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-            {/* Presets */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <Label>Quick Start Presets</Label>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {LAUNCH_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    onClick={() => applyPreset(preset.id)}
-                    className="flex flex-col items-start rounded-lg border p-3 text-left transition-all hover:border-primary hover:bg-primary/5"
-                  >
-                    <span className="text-sm font-medium">{preset.name}</span>
-                    <span className="text-xs text-muted-foreground mt-1">
-                      {preset.description}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Presets (hidden in draft mode) */}
+            {mode !== "draft" && (
+              <>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <Label>Quick Start Presets</Label>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {LAUNCH_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        onClick={() => applyPreset(preset.id)}
+                        className="flex flex-col items-start rounded-lg border p-3 text-left transition-all hover:border-primary hover:bg-primary/5"
+                      >
+                        <span className="text-sm font-medium">{preset.name}</span>
+                        <span className="text-xs text-muted-foreground mt-1">
+                          {preset.description}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            <Separator />
+                <Separator />
+              </>
+            )}
 
             {/* Token Configuration */}
             <div className="space-y-4">
@@ -588,36 +630,68 @@ export function LaunchForm() {
               </div>
             )}
 
-            {/* Submit Button */}
-            {!address ? (
-              <div className="space-y-3">
-                <div className="text-center">
-                  <appkit-button />
-                </div>
-                <p className="text-xs text-center text-muted-foreground">
-                  Connect your wallet to create a launch
-                </p>
+            {draftError && (
+              <div className="flex items-start gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+                <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                <div className="text-sm text-destructive">{draftError}</div>
               </div>
-            ) : (
-              <Button
-                onClick={handleSubmit}
-                disabled={isPending || isConfirming}
-                className="w-full h-12 text-base"
-                size="lg"
-              >
-                {isPending || isConfirming ? (
-                  <>
-                    <Spinner size="sm" className="text-white" />
-                    {isPending ? "Confirm in Wallet..." : "Confirming..."}
-                  </>
-                ) : (
-                  <>
-                    <Rocket className="h-5 w-5" />
-                    Create Launch
-                  </>
-                )}
-              </Button>
             )}
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              {!address ? (
+                <>
+                  <div className="text-center">
+                    <appkit-button />
+                  </div>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Connect your wallet to create a launch{mode !== "draft" ? " or save a draft" : ""}
+                  </p>
+                </>
+              ) : (
+                <div className="flex gap-3">
+                  {mode !== "draft" && (
+                    <Button
+                      onClick={handleSaveDraft}
+                      disabled={isSavingDraft || isPending || isConfirming}
+                      variant="outline"
+                      className="h-12 text-base"
+                      size="lg"
+                    >
+                      {isSavingDraft ? (
+                        <>
+                          <Spinner size="sm" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-5 w-5" />
+                          Save Draft
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isPending || isConfirming || isSavingDraft}
+                    className="flex-1 h-12 text-base"
+                    size="lg"
+                  >
+                    {isPending || isConfirming ? (
+                      <>
+                        <Spinner size="sm" className="text-white" />
+                        {isPending ? "Confirm in Wallet..." : "Confirming..."}
+                      </>
+                    ) : (
+                      <>
+                        <Rocket className="h-5 w-5" />
+                        Create Launch
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
       </CardContent>
     </Card>
   );
