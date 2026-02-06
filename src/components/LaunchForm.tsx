@@ -589,24 +589,35 @@ export function LaunchForm() {
             )}
 
             {/* Submit Button */}
-            <Button
-              onClick={handleSubmit}
-              disabled={isPending || isConfirming}
-              className="w-full h-12 text-base"
-              size="lg"
-            >
-              {isPending || isConfirming ? (
-                <>
-                  <Spinner size="sm" className="text-white" />
-                  {isPending ? "Confirm in Wallet..." : "Confirming..."}
-                </>
-              ) : (
-                <>
-                  <Rocket className="h-5 w-5" />
-                  Create Launch
-                </>
-              )}
-            </Button>
+            {!address ? (
+              <div className="space-y-3">
+                <div className="text-center">
+                  <appkit-button />
+                </div>
+                <p className="text-xs text-center text-muted-foreground">
+                  Connect your wallet to create a launch
+                </p>
+              </div>
+            ) : (
+              <Button
+                onClick={handleSubmit}
+                disabled={isPending || isConfirming}
+                className="w-full h-12 text-base"
+                size="lg"
+              >
+                {isPending || isConfirming ? (
+                  <>
+                    <Spinner size="sm" className="text-white" />
+                    {isPending ? "Confirm in Wallet..." : "Confirming..."}
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="h-5 w-5" />
+                    Create Launch
+                  </>
+                )}
+              </Button>
+            )}
       </CardContent>
     </Card>
   );

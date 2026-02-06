@@ -593,9 +593,10 @@ export const LAUNCH_STATE_COLORS: Record<LaunchState, string> = {
 };
 
 // ============================================
-// TallyLaunchOrchestrator ABI (minimal view methods)
+// TallyLaunchOrchestrator ABI
 // ============================================
 export const TALLY_LAUNCH_ORCHESTRATOR_ABI = [
+  // --- View: individual fields ---
   {
     type: "function",
     name: "operator",
@@ -644,5 +645,187 @@ export const TALLY_LAUNCH_ORCHESTRATOR_ABI = [
     inputs: [],
     outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
     stateMutability: "view",
+  },
+  // --- View: struct-returning ---
+  {
+    type: "function",
+    name: "getLaunchInfo",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        internalType: "struct LaunchInfo",
+        components: [
+          { name: "launchId", type: "uint256", internalType: "uint256" },
+          { name: "launcher", type: "address", internalType: "address" },
+          { name: "token", type: "address", internalType: "address" },
+          { name: "paymentToken", type: "address", internalType: "address" },
+          { name: "operator", type: "address", internalType: "address" },
+          { name: "treasury", type: "address", internalType: "address" },
+          { name: "state", type: "uint8", internalType: "enum LaunchState" },
+          { name: "auctionDuration", type: "uint256", internalType: "uint256" },
+          { name: "pricingSteps", type: "uint256", internalType: "uint256" },
+          { name: "reservePrice", type: "uint256", internalType: "uint256" },
+          { name: "startTime", type: "uint256", internalType: "uint256" },
+          { name: "liquidityAllocation", type: "uint256", internalType: "uint256" },
+          { name: "treasuryAllocation", type: "uint256", internalType: "uint256" },
+          { name: "poolFeeTier", type: "uint24", internalType: "uint24" },
+          { name: "tickSpacing", type: "int24", internalType: "int24" },
+          { name: "lockupDuration", type: "uint256", internalType: "uint256" },
+          { name: "unlockTime", type: "uint256", internalType: "uint256" },
+          { name: "positionBeneficiary", type: "address", internalType: "address" },
+          { name: "platformFeeOnLPFees", type: "uint256", internalType: "uint256" },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getDistributionState",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        internalType: "struct DistributionInfo",
+        components: [
+          { name: "totalRaised", type: "uint256", internalType: "uint256" },
+          { name: "tokensSold", type: "uint256", internalType: "uint256" },
+          { name: "treasuryPaid", type: "uint256", internalType: "uint256" },
+          { name: "liquidityCreated", type: "uint256", internalType: "uint256" },
+          { name: "liquidityComplete", type: "bool", internalType: "bool" },
+          { name: "treasuryComplete", type: "bool", internalType: "bool" },
+          { name: "cca", type: "address", internalType: "address" },
+          { name: "lockupContract", type: "address", internalType: "address" },
+          { name: "positionTokenId", type: "uint256", internalType: "uint256" },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getAuctionInfo",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        internalType: "struct AuctionInfo",
+        components: [
+          { name: "cca", type: "address", internalType: "address" },
+          { name: "startTime", type: "uint256", internalType: "uint256" },
+          { name: "endTime", type: "uint256", internalType: "uint256" },
+          { name: "currentPrice", type: "uint256", internalType: "uint256" },
+          { name: "reservePrice", type: "uint256", internalType: "uint256" },
+          { name: "tokensSold", type: "uint256", internalType: "uint256" },
+          { name: "totalRaised", type: "uint256", internalType: "uint256" },
+          { name: "isActive", type: "bool", internalType: "bool" },
+          { name: "hasEnded", type: "bool", internalType: "bool" },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "isDistributionPermissionless",
+    inputs: [],
+    outputs: [{ name: "", type: "bool", internalType: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "isUnlocked",
+    inputs: [],
+    outputs: [{ name: "", type: "bool", internalType: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "pendingOperator",
+    inputs: [],
+    outputs: [{ name: "", type: "address", internalType: "address" }],
+    stateMutability: "view",
+  },
+  // --- State-changing functions ---
+  {
+    type: "function",
+    name: "finalizeSetup",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "startAuction",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "distributeLiquidity",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "distributeTreasury",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "distributeAll",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "finalizeFailedAuction",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "sweepToken",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "sweepPaymentToken",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "withdrawPosition",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "transferOperator",
+    inputs: [{ name: "newOperator", type: "address", internalType: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "acceptOperator",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
   },
 ] as const;

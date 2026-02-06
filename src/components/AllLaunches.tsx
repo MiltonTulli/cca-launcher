@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Address, formatUnits } from "viem";
-import { useAccount, useChainId, useReadContract, useReadContracts } from "wagmi";
+import { useChainId, useReadContract, useReadContracts } from "wagmi";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -14,12 +14,8 @@ import {
   LAUNCH_STATE_LABELS,
   LAUNCH_STATE_COLORS,
 } from "@/config/contracts";
-import { ExternalLink, Rocket, RefreshCw, Settings } from "lucide-react";
+import { ExternalLink, Globe, RefreshCw, Settings } from "lucide-react";
 import Link from "next/link";
-
-interface MyLaunchesProps {
-  onNavigateToNewLaunch: () => void;
-}
 
 const EXPLORER_URLS: Record<number, string> = {
   1: "https://etherscan.io",
@@ -28,8 +24,7 @@ const EXPLORER_URLS: Record<number, string> = {
   84532: "https://sepolia.basescan.org",
 };
 
-export function MyLaunches({ onNavigateToNewLaunch }: MyLaunchesProps) {
-  const { address } = useAccount();
+export function AllLaunches() {
   const chainId = useChainId();
   const contractAddress = TALLY_LAUNCH_FACTORY_ADDRESSES[chainId];
   const explorerUrl = EXPLORER_URLS[chainId] || "https://etherscan.io";
@@ -88,12 +83,12 @@ export function MyLaunches({ onNavigateToNewLaunch }: MyLaunchesProps) {
     },
   });
 
-  // 3. Parse multicall results and filter by connected wallet
+  // 3. Parse multicall results (no filtering — show all)
   const FIELDS_PER_LAUNCH = 5;
-  const myLaunches = useMemo(() => {
-    if (!allLaunches || !multicallResults || !address) return [];
+  const launches = useMemo(() => {
+    if (!allLaunches || !multicallResults) return [];
 
-    const launches = [];
+    const result = [];
     for (let i = 0; i < allLaunches.length; i++) {
       const base = i * FIELDS_PER_LAUNCH;
       const operator = multicallResults[base]?.result as Address | undefined;
@@ -102,20 +97,18 @@ export function MyLaunches({ onNavigateToNewLaunch }: MyLaunchesProps) {
       const launchId = multicallResults[base + 3]?.result as bigint | undefined;
       const tokenAmount = multicallResults[base + 4]?.result as bigint | undefined;
 
-      if (operator?.toLowerCase() === address.toLowerCase()) {
-        launches.push({
-          orchestratorAddress: allLaunches[i],
-          operator,
-          state: (state ?? 0) as LaunchState,
-          token: token ?? ("0x0" as Address),
-          launchId: launchId ?? BigInt(0),
-          tokenAmount: tokenAmount ?? BigInt(0),
-        });
-      }
+      result.push({
+        orchestratorAddress: allLaunches[i],
+        operator: operator ?? ("0x0" as Address),
+        state: (state ?? 0) as LaunchState,
+        token: token ?? ("0x0" as Address),
+        launchId: launchId ?? BigInt(0),
+        tokenAmount: tokenAmount ?? BigInt(0),
+      });
     }
 
-    return launches;
-  }, [allLaunches, multicallResults, address]);
+    return result;
+  }, [allLaunches, multicallResults]);
 
   const isLoading = isLoadingLaunches || isLoadingDetails;
 
@@ -123,25 +116,21 @@ export function MyLaunches({ onNavigateToNewLaunch }: MyLaunchesProps) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <Spinner size="lg" />
-        <p className="mt-4 text-sm text-muted-foreground">Loading your launches...</p>
+        <p className="mt-4 text-sm text-muted-foreground">Loading launches...</p>
       </div>
     );
   }
 
-  if (myLaunches.length === 0) {
+  if (launches.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-          <Rocket className="h-10 w-10 text-muted-foreground" />
+          <Globe className="h-10 w-10 text-muted-foreground" />
         </div>
         <h2 className="mt-6 text-xl font-semibold">No launches yet</h2>
         <p className="mt-2 text-sm text-muted-foreground max-w-sm text-center">
-          You haven&apos;t created any token launches. Get started by creating your first one.
+          No token launches have been created on this network yet.
         </p>
-        <Button onClick={onNavigateToNewLaunch} className="mt-6">
-          <Rocket className="h-4 w-4" />
-          Create your first launch
-        </Button>
       </div>
     );
   }
@@ -150,9 +139,9 @@ export function MyLaunches({ onNavigateToNewLaunch }: MyLaunchesProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">My Launches</h1>
+          <h1 className="text-2xl font-bold">All Launches</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {myLaunches.length} launch{myLaunches.length !== 1 ? "es" : ""} found
+            {launches.length} launch{launches.length !== 1 ? "es" : ""} on this network
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -162,7 +151,7 @@ export function MyLaunches({ onNavigateToNewLaunch }: MyLaunchesProps) {
       </div>
 
       <div className="grid gap-4">
-        {myLaunches.map((launch) => (
+        {launches.map((launch) => (
           <Card key={launch.orchestratorAddress}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -196,6 +185,18 @@ export function MyLaunches({ onNavigateToNewLaunch }: MyLaunchesProps) {
                   </a>
                 </div>
                 <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Operator</span>
+                  <a
+                    href={`${explorerUrl}/address/${launch.operator}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 font-mono text-xs text-primary hover:underline"
+                  >
+                    {launch.operator.slice(0, 10)}...{launch.operator.slice(-8)}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+                <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Token Amount</span>
                   <span className="font-mono text-xs">
                     {formatUnits(launch.tokenAmount, 18)}
@@ -217,7 +218,7 @@ export function MyLaunches({ onNavigateToNewLaunch }: MyLaunchesProps) {
                   <Link href={`/launch/${launch.orchestratorAddress}`}>
                     <Button variant="outline" size="sm" className="w-full">
                       <Settings className="h-4 w-4" />
-                      Manage
+                      View Details
                     </Button>
                   </Link>
                 </div>

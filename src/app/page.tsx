@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { LaunchForm } from "@/components/LaunchForm";
 import { MyLaunches } from "@/components/MyLaunches";
+import { AllLaunches } from "@/components/AllLaunches";
 import { useAccount, useChainId } from "wagmi";
 import { TALLY_LAUNCH_FACTORY_ADDRESSES } from "@/config/contracts";
-import { AlertCircle, Rocket, Github, Plus, List } from "lucide-react";
+import { AlertCircle, Rocket, Github, Plus, List, Globe } from "lucide-react";
 
-type Tab = "new-launch" | "my-launches";
+type Tab = "new-launch" | "all-launches" | "my-launches";
 
 export default function Home() {
   const { isConnected } = useAccount();
@@ -15,38 +16,6 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("new-launch");
   const contractAddress = TALLY_LAUNCH_FACTORY_ADDRESSES[chainId];
   const isDeployed = contractAddress && contractAddress !== "0x0000000000000000000000000000000000000000";
-
-  // Wallet gate - full screen
-  if (!isConnected) {
-    return (
-      <main className="min-h-screen flex flex-col">
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container mx-auto flex h-16 items-center justify-between px-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <Rocket className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-bold">Tally Launch</span>
-            </div>
-            <appkit-button />
-          </div>
-        </header>
-
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center text-center px-4">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 mb-6">
-              <Rocket className="h-10 w-10 text-primary" />
-            </div>
-            <h1 className="text-2xl font-bold mb-2">Connect your wallet to continue</h1>
-            <p className="text-muted-foreground mb-6 max-w-sm">
-              Connect your wallet to create and manage token launches on Uniswap V4.
-            </p>
-            <appkit-button />
-          </div>
-        </div>
-      </main>
-    );
-  }
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -87,16 +56,29 @@ export default function Home() {
             New Launch
           </button>
           <button
-            onClick={() => setActiveTab("my-launches")}
+            onClick={() => setActiveTab("all-launches")}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-              activeTab === "my-launches"
+              activeTab === "all-launches"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <List className="h-4 w-4" />
-            My Launches
+            <Globe className="h-4 w-4" />
+            All Launches
           </button>
+          {isConnected && (
+            <button
+              onClick={() => setActiveTab("my-launches")}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                activeTab === "my-launches"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <List className="h-4 w-4" />
+              My Launches
+            </button>
+          )}
         </div>
       </div>
 
@@ -111,11 +93,19 @@ export default function Home() {
               onClick={() => setActiveTab("new-launch")}
             />
             <SidebarItem
-              icon={<List className="h-4 w-4" />}
-              label="My Launches"
-              active={activeTab === "my-launches"}
-              onClick={() => setActiveTab("my-launches")}
+              icon={<Globe className="h-4 w-4" />}
+              label="All Launches"
+              active={activeTab === "all-launches"}
+              onClick={() => setActiveTab("all-launches")}
             />
+            {isConnected && (
+              <SidebarItem
+                icon={<List className="h-4 w-4" />}
+                label="My Launches"
+                active={activeTab === "my-launches"}
+                onClick={() => setActiveTab("my-launches")}
+              />
+            )}
           </nav>
         </aside>
 
@@ -175,7 +165,11 @@ export default function Home() {
               </>
             )}
 
-            {activeTab === "my-launches" && (
+            {activeTab === "all-launches" && (
+              <AllLaunches />
+            )}
+
+            {activeTab === "my-launches" && isConnected && (
               <MyLaunches onNavigateToNewLaunch={() => setActiveTab("new-launch")} />
             )}
           </div>
