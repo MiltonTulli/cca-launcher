@@ -24,7 +24,6 @@ import {
 } from "@/config/contracts";
 import {
   Rocket,
-  Wallet,
   AlertCircle,
   CheckCircle2,
   ExternalLink,
@@ -43,7 +42,7 @@ interface LaunchResult {
 }
 
 export function LaunchForm() {
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
   const chainId = useChainId();
   const [formValues, setFormValues] = useState<LaunchFormValues>(DEFAULT_FORM_VALUES);
   const [errors, setErrors] = useState<Partial<Record<keyof LaunchFormValues, string>>>({});
@@ -273,19 +272,6 @@ export function LaunchForm() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Wallet Connection */}
-        {!isConnected && (
-          <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-8">
-            <Wallet className="h-10 w-10 text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground mb-4">
-              Connect your wallet to create a launch
-            </p>
-            <appkit-button />
-          </div>
-        )}
-
-        {isConnected && (
-          <>
             {/* Presets */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
@@ -621,8 +607,6 @@ export function LaunchForm() {
                 </>
               )}
             </Button>
-          </>
-        )}
       </CardContent>
     </Card>
   );

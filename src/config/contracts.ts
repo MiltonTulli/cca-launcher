@@ -555,3 +555,94 @@ export const WIZARD_STEPS = [
 ] as const;
 
 export type WizardStepId = (typeof WIZARD_STEPS)[number]["id"];
+
+// ============================================
+// LAUNCH STATE ENUM (matches contract)
+// ============================================
+export enum LaunchState {
+  SETUP = 0,
+  FINALIZED = 1,
+  AUCTION_ACTIVE = 2,
+  AUCTION_ENDED = 3,
+  AUCTION_FAILED = 4,
+  DISTRIBUTED = 5,
+  LOCKED = 6,
+  UNLOCKED = 7,
+}
+
+export const LAUNCH_STATE_LABELS: Record<LaunchState, string> = {
+  [LaunchState.SETUP]: "Setup",
+  [LaunchState.FINALIZED]: "Finalized",
+  [LaunchState.AUCTION_ACTIVE]: "Auction Active",
+  [LaunchState.AUCTION_ENDED]: "Auction Ended",
+  [LaunchState.AUCTION_FAILED]: "Auction Failed",
+  [LaunchState.DISTRIBUTED]: "Distributed",
+  [LaunchState.LOCKED]: "Locked",
+  [LaunchState.UNLOCKED]: "Unlocked",
+};
+
+export const LAUNCH_STATE_COLORS: Record<LaunchState, string> = {
+  [LaunchState.SETUP]: "bg-gray-100 text-gray-700",
+  [LaunchState.FINALIZED]: "bg-blue-100 text-blue-700",
+  [LaunchState.AUCTION_ACTIVE]: "bg-green-100 text-green-700",
+  [LaunchState.AUCTION_ENDED]: "bg-yellow-100 text-yellow-700",
+  [LaunchState.AUCTION_FAILED]: "bg-red-100 text-red-700",
+  [LaunchState.DISTRIBUTED]: "bg-purple-100 text-purple-700",
+  [LaunchState.LOCKED]: "bg-orange-100 text-orange-700",
+  [LaunchState.UNLOCKED]: "bg-green-100 text-green-700",
+};
+
+// ============================================
+// TallyLaunchOrchestrator ABI (minimal view methods)
+// ============================================
+export const TALLY_LAUNCH_ORCHESTRATOR_ABI = [
+  {
+    type: "function",
+    name: "operator",
+    inputs: [],
+    outputs: [{ name: "", type: "address", internalType: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "state",
+    inputs: [],
+    outputs: [{ name: "", type: "uint8", internalType: "enum LaunchState" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "token",
+    inputs: [],
+    outputs: [{ name: "", type: "address", internalType: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "paymentToken",
+    inputs: [],
+    outputs: [{ name: "", type: "address", internalType: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "tokenAmount",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "auctionDuration",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "launchId",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+    stateMutability: "view",
+  },
+] as const;
