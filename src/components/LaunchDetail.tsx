@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Address, formatUnits, isAddress } from "viem";
+import { Address, encodeFunctionData, formatUnits, isAddress } from "viem";
 import {
   useAccount,
   useChainId,
@@ -32,7 +32,12 @@ import {
   ArrowRightLeft,
   Shield,
   Info,
+  FlaskConical,
 } from "lucide-react";
+import {
+  simulateTransaction,
+  type SimulationResult,
+} from "@/lib/simulate";
 
 // ============================================
 // Types
@@ -200,6 +205,7 @@ function ActionButton({
   disabled,
   variant = "default",
   onSuccess,
+  simulatable,
 }: {
   label: string;
   functionName: string;
@@ -209,9 +215,16 @@ function ActionButton({
   disabled?: boolean;
   variant?: "default" | "outline" | "destructive";
   onSuccess?: () => void;
+  simulatable?: boolean;
 }) {
+  const { address: from } = useAccount();
+  const chainId = useChainId();
   const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  const [simResult, setSimResult] = useState<SimulationResult | null>(null);
+  const [simulating, setSimulating] = useState(false);
+  const [simError, setSimError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isSuccess && onSuccess) {
@@ -230,6 +243,35 @@ function ActionButton({
       ...(args ? { args: args as never } : {}),
       ...(gas ? { gas } : {}),
     });
+  };
+
+  const handleSimulate = async () => {
+    if (!from) return;
+    setSimulating(true);
+    setSimResult(null);
+    setSimError(null);
+
+    try {
+      const input = encodeFunctionData({
+        abi: TALLY_LAUNCH_ORCHESTRATOR_ABI,
+        functionName: functionName as never,
+        ...(args ? { args: args as never } : {}),
+      });
+
+      const result = await simulateTransaction({
+        from,
+        to: contractAddress,
+        input,
+        networkId: chainId,
+        gas: gas ? Number(gas) : undefined,
+      });
+
+      setSimResult(result);
+    } catch (err) {
+      setSimError(err instanceof Error ? err.message : "Simulation failed");
+    } finally {
+      setSimulating(false);
+    }
   };
 
   return (
@@ -269,6 +311,70 @@ function ActionButton({
                   : error.message;
               })()}
         </p>
+      )}
+      {simulatable && from && (
+        <div className="mt-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleSimulate}
+            disabled={simulating || disabled}
+            className="w-full"
+          >
+            {simulating ? (
+              <>
+                <Spinner size="sm" />
+                Simulating...
+              </>
+            ) : (
+              <>
+                <FlaskConical className="h-4 w-4" />
+                Simulate with Tenderly
+              </>
+            )}
+          </Button>
+          {simResult && (
+            <div
+              className={`mt-1.5 text-xs rounded-lg border p-2.5 ${
+                simResult.success
+                  ? "border-green-200 bg-green-50 text-green-800"
+                  : "border-red-200 bg-red-50 text-red-800"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium flex items-center gap-1">
+                  {simResult.success ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                  ) : (
+                    <XCircle className="h-3.5 w-3.5 text-red-500" />
+                  )}
+                  {simResult.success ? "Simulation passed" : "Simulation failed"}
+                </span>
+                {simResult.gasUsed > 0 && (
+                  <span className="text-[11px] text-muted-foreground">
+                    Gas: {simResult.gasUsed.toLocaleString()}
+                  </span>
+                )}
+              </div>
+              {simResult.error && (
+                <p className="mt-1 text-[11px] leading-tight">{simResult.error}</p>
+              )}
+              <a
+                href={simResult.simulationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-1.5 text-[11px] underline hover:no-underline"
+              >
+                View in Tenderly
+                <ExternalLink className="h-2.5 w-2.5" />
+              </a>
+            </div>
+          )}
+          {simError && (
+            <p className="mt-1 text-xs text-red-600">{simError}</p>
+          )}
+        </div>
       )}
     </div>
   );
@@ -1067,6 +1173,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
             functionName="finalizeSetup"
             contractAddress={address}
             onSuccess={handleRefetch}
+            simulatable
           />
         </div>
       );
@@ -1089,6 +1196,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
             contractAddress={address}
             gas={BigInt(15_000_000)}
             onSuccess={handleRefetch}
+            simulatable
           />
         </div>
       );
