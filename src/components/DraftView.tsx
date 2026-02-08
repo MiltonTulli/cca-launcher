@@ -308,7 +308,7 @@ export function DraftView({ id }: DraftViewProps) {
         )}
         {!address ? (
           <div className="flex-1 flex flex-col items-center gap-2">
-            <appkit-button />
+            <appkit-button balance="hide" />
             <p className="text-xs text-muted-foreground">Connect to launch</p>
           </div>
         ) : (

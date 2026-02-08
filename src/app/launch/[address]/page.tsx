@@ -29,7 +29,7 @@ export default function LaunchPage({
               </div>
               <span className="text-xl font-bold">Tally Launch</span>
             </div>
-            <appkit-button />
+            <appkit-button balance="hide" />
           </div>
         </header>
 
@@ -69,7 +69,7 @@ export default function LaunchPage({
             </div>
             <span className="text-xl font-bold">Tally Launch</span>
           </div>
-          <appkit-button />
+          <appkit-button balance="hide" />
         </div>
       </header>
 

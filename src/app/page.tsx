@@ -36,7 +36,7 @@ export default function Home() {
                 Contract not deployed on this network
               </div>
             )}
-            <appkit-button />
+            <appkit-button balance="hide" />
           </div>
         </div>
       </header>

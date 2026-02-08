@@ -1181,7 +1181,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
                 Connect your wallet to perform actions on this launch.
               </p>
               <div>
-                <appkit-button />
+                <appkit-button balance="hide" />
               </div>
             </CardContent>
           </Card>

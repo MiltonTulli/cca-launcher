@@ -658,7 +658,7 @@ export function LaunchForm({ initialValues, mode = "create", draftId, onDraftSav
               {!address ? (
                 <>
                   <div className="text-center">
-                    <appkit-button />
+                    <appkit-button balance="hide" />
                   </div>
                   <p className="text-xs text-center text-muted-foreground">
                     Connect your wallet to create a launch{mode !== "draft" ? " or save a draft" : ""}
