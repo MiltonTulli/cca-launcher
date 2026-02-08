@@ -385,6 +385,13 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
         functionName: "hasRole",
         args: [MINTER_ROLE, address],
       },
+      // [3] Token balance of operator (for TRANSFER_FROM check in startAuction)
+      {
+        address: tokenAddress,
+        abi: ERC20_ABI,
+        functionName: "balanceOf",
+        args: [operatorAddress],
+      },
     ];
     return contracts;
   }, [tokenAddress, operatorAddress, address]);
@@ -404,6 +411,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
   const hasMinterRole = tr?.[2]?.status === "success"
     ? (tr[2].result as boolean)
     : undefined;
+  const operatorTokenBalance = tr?.[3]?.result as bigint | undefined;
 
   // ============================================
   // Precondition computation
@@ -513,6 +521,67 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
             : "No tokens available for auction (100% allocated to liquidity)",
         met: auctionSupply > BigInt(0),
       });
+
+      // Token readiness checks — startAuction actually transfers tokens
+      if (tokenSourceValue === TokenSource.MINT) {
+        checks.push({
+          id: "minter-role",
+          label: "Orchestrator has minter role",
+          description:
+            hasMinterRole !== undefined
+              ? hasMinterRole
+                ? "MINTER_ROLE granted — tokens will be minted on start"
+                : "MINTER_ROLE not granted on token contract"
+              : "Checking role...",
+          met: hasMinterRole === true,
+          loading: hasMinterRole === undefined && tokenLoading,
+        });
+      } else if (tokenSourceValue === TokenSource.PERMIT2) {
+        // TRANSFER_FROM: needs both allowance and balance from operator
+        checks.push({
+          id: "token-allowance",
+          label: "Operator has approved tokens",
+          description:
+            tokenAmountValue !== undefined && operatorTokenAllowance !== undefined
+              ? `Allowance: ${formatUnits(operatorTokenAllowance, 18)} / Required: ${formatUnits(tokenAmountValue, 18)}`
+              : "Checking allowance...",
+          met: !!(
+            operatorTokenAllowance !== undefined &&
+            tokenAmountValue !== undefined &&
+            operatorTokenAllowance >= tokenAmountValue
+          ),
+          loading: tokenLoading,
+        });
+        checks.push({
+          id: "operator-balance",
+          label: "Operator has sufficient token balance",
+          description:
+            tokenAmountValue !== undefined && operatorTokenBalance !== undefined
+              ? `Balance: ${formatUnits(operatorTokenBalance, 18)} / Required: ${formatUnits(tokenAmountValue, 18)}`
+              : "Checking balance...",
+          met: !!(
+            operatorTokenBalance !== undefined &&
+            tokenAmountValue !== undefined &&
+            operatorTokenBalance >= tokenAmountValue
+          ),
+          loading: tokenLoading,
+        });
+      } else if (tokenSourceValue === TokenSource.TRANSFER) {
+        checks.push({
+          id: "token-balance",
+          label: "Tokens available in orchestrator",
+          description:
+            tokenAmountValue !== undefined && orchestratorTokenBalance !== undefined
+              ? `Balance: ${formatUnits(orchestratorTokenBalance, 18)} / Required: ${formatUnits(tokenAmountValue, 18)}`
+              : "Checking balance...",
+          met: !!(
+            orchestratorTokenBalance !== undefined &&
+            tokenAmountValue !== undefined &&
+            orchestratorTokenBalance >= tokenAmountValue
+          ),
+          loading: tokenLoading,
+        });
+      }
 
       map["startAuction"] = checks;
     }
@@ -661,6 +730,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
     tokenAmountValue,
     orchestratorTokenBalance,
     operatorTokenAllowance,
+    operatorTokenBalance,
     hasMinterRole,
     tokenLoading,
     auctionEndTimeValue,
