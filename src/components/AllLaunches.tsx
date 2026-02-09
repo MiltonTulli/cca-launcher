@@ -1,21 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
-import { Address, formatUnits } from "viem";
-import { useChainId, useReadContract, useReadContracts } from "wagmi";
+import { formatUnits } from "viem";
+import { useChainId } from "wagmi";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
-  TALLY_LAUNCH_FACTORY_ABI,
-  TALLY_LAUNCH_FACTORY_ADDRESSES,
-  TALLY_LAUNCH_ORCHESTRATOR_ABI,
-  LaunchState,
   LAUNCH_STATE_LABELS,
   LAUNCH_STATE_COLORS,
 } from "@/config/contracts";
 import { ExternalLink, Globe, RefreshCw, Settings } from "lucide-react";
 import Link from "next/link";
+import { useLaunches } from "@/hooks/useLaunches";
 
 const EXPLORER_URLS: Record<number, string> = {
   1: "https://etherscan.io",
@@ -26,91 +22,8 @@ const EXPLORER_URLS: Record<number, string> = {
 
 export function AllLaunches() {
   const chainId = useChainId();
-  const contractAddress = TALLY_LAUNCH_FACTORY_ADDRESSES[chainId];
   const explorerUrl = EXPLORER_URLS[chainId] || "https://etherscan.io";
-
-  // 1. Fetch all launch addresses from factory
-  const {
-    data: allLaunches,
-    isLoading: isLoadingLaunches,
-    refetch,
-  } = useReadContract({
-    address: contractAddress,
-    abi: TALLY_LAUNCH_FACTORY_ABI,
-    functionName: "getAllLaunches",
-    query: {
-      enabled: !!contractAddress && contractAddress !== "0x0000000000000000000000000000000000000000",
-    },
-  });
-
-  // 2. Build multicall contracts for each launch address
-  const multicallContracts = useMemo(() => {
-    if (!allLaunches || allLaunches.length === 0) return [];
-
-    return allLaunches.flatMap((addr: Address) => [
-      {
-        address: addr,
-        abi: TALLY_LAUNCH_ORCHESTRATOR_ABI,
-        functionName: "operator" as const,
-      },
-      {
-        address: addr,
-        abi: TALLY_LAUNCH_ORCHESTRATOR_ABI,
-        functionName: "state" as const,
-      },
-      {
-        address: addr,
-        abi: TALLY_LAUNCH_ORCHESTRATOR_ABI,
-        functionName: "token" as const,
-      },
-      {
-        address: addr,
-        abi: TALLY_LAUNCH_ORCHESTRATOR_ABI,
-        functionName: "launchId" as const,
-      },
-      {
-        address: addr,
-        abi: TALLY_LAUNCH_ORCHESTRATOR_ABI,
-        functionName: "tokenAmount" as const,
-      },
-    ]);
-  }, [allLaunches]);
-
-  const { data: multicallResults, isLoading: isLoadingDetails } = useReadContracts({
-    contracts: multicallContracts,
-    query: {
-      enabled: multicallContracts.length > 0,
-    },
-  });
-
-  // 3. Parse multicall results (no filtering — show all)
-  const FIELDS_PER_LAUNCH = 5;
-  const launches = useMemo(() => {
-    if (!allLaunches || !multicallResults) return [];
-
-    const result = [];
-    for (let i = 0; i < allLaunches.length; i++) {
-      const base = i * FIELDS_PER_LAUNCH;
-      const operator = multicallResults[base]?.result as Address | undefined;
-      const state = multicallResults[base + 1]?.result as number | undefined;
-      const token = multicallResults[base + 2]?.result as Address | undefined;
-      const launchId = multicallResults[base + 3]?.result as bigint | undefined;
-      const tokenAmount = multicallResults[base + 4]?.result as bigint | undefined;
-
-      result.push({
-        orchestratorAddress: allLaunches[i],
-        operator: operator ?? ("0x0" as Address),
-        state: (state ?? 0) as LaunchState,
-        token: token ?? ("0x0" as Address),
-        launchId: launchId ?? BigInt(0),
-        tokenAmount: tokenAmount ?? BigInt(0),
-      });
-    }
-
-    return result;
-  }, [allLaunches, multicallResults]);
-
-  const isLoading = isLoadingLaunches || isLoadingDetails;
+  const { launches, isLoading, refetch } = useLaunches();
 
   if (isLoading) {
     return (

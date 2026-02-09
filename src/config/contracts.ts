@@ -148,6 +148,7 @@ export const TALLY_LAUNCH_FACTORY_ABI = [
           { name: "distributionDelay", type: "uint256", internalType: "uint256" },
           { name: "positionBeneficiary", type: "address", internalType: "address" },
           { name: "validationHook", type: "address", internalType: "address" },
+          { name: "liquidityManager", type: "address", internalType: "address" },
         ],
       },
     ],
@@ -156,13 +157,6 @@ export const TALLY_LAUNCH_FACTORY_ABI = [
       { name: "launcherAddress", type: "address", internalType: "address" },
     ],
     stateMutability: "nonpayable",
-  },
-  {
-    type: "function",
-    name: "getAllLaunches",
-    inputs: [],
-    outputs: [{ name: "", type: "address[]", internalType: "address[]" }],
-    stateMutability: "view",
   },
   {
     type: "function",
@@ -293,8 +287,19 @@ export const TALLY_LAUNCH_FACTORY_ABI = [
   },
   {
     type: "error",
-    name: "InvalidReservePrice",
-    inputs: [{ name: "price", type: "uint256", internalType: "uint256" }],
+    name: "ReservePriceBelowMinimum",
+    inputs: [
+      { name: "provided", type: "uint256", internalType: "uint256" },
+      { name: "minimum", type: "uint256", internalType: "uint256" },
+    ],
+  },
+  {
+    type: "error",
+    name: "PricingStepsExceedAuctionBlocks",
+    inputs: [
+      { name: "pricingSteps", type: "uint256", internalType: "uint256" },
+      { name: "auctionBlocks", type: "uint256", internalType: "uint256" },
+    ],
   },
   {
     type: "error",
@@ -362,6 +367,7 @@ export interface LaunchParams {
   distributionDelay: bigint;
   positionBeneficiary: Address;
   validationHook: Address;
+  liquidityManager: Address;
 }
 
 // Form values type (user-friendly)
@@ -393,6 +399,8 @@ export interface LaunchFormValues {
   positionBeneficiary: string;
   // Validation
   validationHook: string;
+  // Liquidity management
+  liquidityManager: string;
 }
 
 // ============================================
@@ -420,6 +428,7 @@ export const DEFAULT_FORM_VALUES: LaunchFormValues = {
   distributionDelayDays: "0",
   positionBeneficiary: "",
   validationHook: "0x0000000000000000000000000000000000000000",
+  liquidityManager: "0x0000000000000000000000000000000000000000",
 };
 
 // ============================================
@@ -456,6 +465,7 @@ export const LAUNCH_PRESETS: LaunchPreset[] = [
       lockupDurationDays: "0", // 5 minutes for testing (will convert to seconds)
       distributionDelayDays: "0",
       validationHook: "0x0000000000000000000000000000000000000000",
+      liquidityManager: "0x0000000000000000000000000000000000000000",
     },
   },
   {
@@ -477,6 +487,7 @@ export const LAUNCH_PRESETS: LaunchPreset[] = [
       lockupDurationDays: "180",
       distributionDelayDays: "1",
       validationHook: "0x0000000000000000000000000000000000000000",
+      liquidityManager: "0x0000000000000000000000000000000000000000",
     },
   },
   {
@@ -502,6 +513,7 @@ export const LAUNCH_PRESETS: LaunchPreset[] = [
       lockupDurationDays: "0",
       distributionDelayDays: "0",
       validationHook: "0x0000000000000000000000000000000000000000",
+      liquidityManager: "0x0000000000000000000000000000000000000000",
     },
   },
 ];
@@ -865,6 +877,20 @@ export const TALLY_LAUNCH_ORCHESTRATOR_ABI = [
     type: "function",
     name: "acceptOperator",
     inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "liquidityManager",
+    inputs: [],
+    outputs: [{ name: "", type: "address", internalType: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "updateLiquidityManager",
+    inputs: [{ name: "newManager", type: "address", internalType: "address" }],
     outputs: [],
     stateMutability: "nonpayable",
   },

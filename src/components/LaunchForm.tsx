@@ -127,6 +127,9 @@ export function LaunchForm({ initialValues, mode = "create", draftId, onDraftSav
     if (formValues.validationHook && formValues.validationHook !== "0x0000000000000000000000000000000000000000" && !isAddress(formValues.validationHook)) {
       newErrors.validationHook = "Invalid hook address";
     }
+    if (formValues.liquidityManager && formValues.liquidityManager !== "0x0000000000000000000000000000000000000000" && !isAddress(formValues.liquidityManager)) {
+      newErrors.liquidityManager = "Invalid liquidity manager address";
+    }
 
     // Token amount
     if (!formValues.tokenAmount || parseFloat(formValues.tokenAmount) <= 0) {
@@ -150,9 +153,17 @@ export function LaunchForm({ initialValues, mode = "create", draftId, onDraftSav
       newErrors.pricingSteps = `Must be between ${LAUNCH_CONSTRAINTS.MIN_PRICING_STEPS} and ${LAUNCH_CONSTRAINTS.MAX_PRICING_STEPS}`;
     }
 
-    // Reserve price
+    // Reserve price — must meet CCA's MIN_FLOOR_PRICE (uint32.max + 1 = 4,294,967,296 raw units)
     if (!formValues.reservePrice || parseFloat(formValues.reservePrice) <= 0) {
       newErrors.reservePrice = "Reserve price must be greater than 0";
+    } else {
+      const paymentDecimals = parseInt(formValues.paymentTokenDecimals || "18");
+      const reserveRaw = parseUnits(formValues.reservePrice, paymentDecimals);
+      const MIN_FLOOR_PRICE = BigInt("4294967296"); // 2^32
+      if (reserveRaw < MIN_FLOOR_PRICE) {
+        const minHuman = Number(MIN_FLOOR_PRICE) / 10 ** paymentDecimals;
+        newErrors.reservePrice = `Reserve price too low. Minimum: ${minHuman > 0.000001 ? minHuman.toFixed(6) : "~0"} (${MIN_FLOOR_PRICE.toString()} raw units)`;
+      }
     }
 
     // Allocation
@@ -215,6 +226,7 @@ export function LaunchForm({ initialValues, mode = "create", draftId, onDraftSav
       distributionDelay: BigInt(parseInt(formValues.distributionDelayDays || "0") * 86400),
       positionBeneficiary: formValues.positionBeneficiary as Address,
       validationHook: (formValues.validationHook || "0x0000000000000000000000000000000000000000") as Address,
+      liquidityManager: (formValues.liquidityManager || "0x0000000000000000000000000000000000000000") as Address,
     };
 
     writeContract({
@@ -631,6 +643,14 @@ export function LaunchForm({ initialValues, mode = "create", draftId, onDraftSav
                   hint="Permitter contract for validation rules"
                 />
                 <FormField
+                  label="Liquidity Manager"
+                  value={formValues.liquidityManager}
+                  onChange={(v) => updateField("liquidityManager", v)}
+                  placeholder="0x0000...0000 (none)"
+                  error={errors.liquidityManager}
+                  hint="Optional address to manage LP position (address(0) for none)"
+                />
+                <FormField
                   label="Tick Spacing"
                   value={formValues.tickSpacing}
                   onChange={(v) => updateField("tickSpacing", v)}
@@ -875,6 +895,11 @@ function LaunchSuccessView({ result, chainId }: LaunchSuccessViewProps) {
               label="Validation Hook"
               value={result.params.validationHook === "0x0000000000000000000000000000000000000000" ? "None" : result.params.validationHook}
               mono={result.params.validationHook !== "0x0000000000000000000000000000000000000000"}
+            />
+            <SummaryRow
+              label="Liquidity Manager"
+              value={result.params.liquidityManager === "0x0000000000000000000000000000000000000000" ? "None" : result.params.liquidityManager}
+              mono={result.params.liquidityManager !== "0x0000000000000000000000000000000000000000"}
             />
           </div>
         </div>

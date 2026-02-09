@@ -1,22 +1,19 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { Address, formatUnits } from "viem";
-import { useAccount, useChainId, useReadContract, useReadContracts } from "wagmi";
+import { formatUnits } from "viem";
+import { useAccount, useChainId } from "wagmi";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
-  TALLY_LAUNCH_FACTORY_ABI,
-  TALLY_LAUNCH_FACTORY_ADDRESSES,
-  TALLY_LAUNCH_ORCHESTRATOR_ABI,
-  LaunchState,
   LAUNCH_STATE_LABELS,
   LAUNCH_STATE_COLORS,
 } from "@/config/contracts";
 import { ExternalLink, Rocket, RefreshCw, Settings, FileText, Trash2, Clock } from "lucide-react";
 import Link from "next/link";
 import { listDrafts, deleteDraft, type DraftIndexEntry } from "@/lib/drafts";
+import { useLaunches } from "@/hooks/useLaunches";
 
 interface MyLaunchesProps {
   onNavigateToNewLaunch: () => void;
@@ -32,7 +29,6 @@ const EXPLORER_URLS: Record<number, string> = {
 export function MyLaunches({ onNavigateToNewLaunch }: MyLaunchesProps) {
   const { address } = useAccount();
   const chainId = useChainId();
-  const contractAddress = TALLY_LAUNCH_FACTORY_ADDRESSES[chainId];
   const explorerUrl = EXPLORER_URLS[chainId] || "https://etherscan.io";
 
   // ============================================
@@ -74,90 +70,20 @@ export function MyLaunches({ onNavigateToNewLaunch }: MyLaunchesProps) {
   // ============================================
   // On-chain launches
   // ============================================
-  const {
-    data: allLaunches,
-    isLoading: isLoadingLaunches,
-    refetch,
-  } = useReadContract({
-    address: contractAddress,
-    abi: TALLY_LAUNCH_FACTORY_ABI,
-    functionName: "getAllLaunches",
-    query: {
-      enabled: !!contractAddress && contractAddress !== "0x0000000000000000000000000000000000000000",
-    },
-  });
+  const { launches: allLaunches, isLoading: isLoadingLaunches, refetch } = useLaunches();
 
-  const multicallContracts = useMemo(() => {
-    if (!allLaunches || allLaunches.length === 0) return [];
-
-    return allLaunches.flatMap((addr: Address) => [
-      {
-        address: addr,
-        abi: TALLY_LAUNCH_ORCHESTRATOR_ABI,
-        functionName: "operator" as const,
-      },
-      {
-        address: addr,
-        abi: TALLY_LAUNCH_ORCHESTRATOR_ABI,
-        functionName: "state" as const,
-      },
-      {
-        address: addr,
-        abi: TALLY_LAUNCH_ORCHESTRATOR_ABI,
-        functionName: "token" as const,
-      },
-      {
-        address: addr,
-        abi: TALLY_LAUNCH_ORCHESTRATOR_ABI,
-        functionName: "launchId" as const,
-      },
-      {
-        address: addr,
-        abi: TALLY_LAUNCH_ORCHESTRATOR_ABI,
-        functionName: "tokenAmount" as const,
-      },
-    ]);
-  }, [allLaunches]);
-
-  const { data: multicallResults, isLoading: isLoadingDetails } = useReadContracts({
-    contracts: multicallContracts,
-    query: {
-      enabled: multicallContracts.length > 0,
-    },
-  });
-
-  const FIELDS_PER_LAUNCH = 5;
+  // Filter to only launches where connected wallet is the operator
   const myLaunches = useMemo(() => {
-    if (!allLaunches || !multicallResults || !address) return [];
-
-    const launches = [];
-    for (let i = 0; i < allLaunches.length; i++) {
-      const base = i * FIELDS_PER_LAUNCH;
-      const operator = multicallResults[base]?.result as Address | undefined;
-      const state = multicallResults[base + 1]?.result as number | undefined;
-      const token = multicallResults[base + 2]?.result as Address | undefined;
-      const launchId = multicallResults[base + 3]?.result as bigint | undefined;
-      const tokenAmount = multicallResults[base + 4]?.result as bigint | undefined;
-
-      if (operator?.toLowerCase() === address.toLowerCase()) {
-        launches.push({
-          orchestratorAddress: allLaunches[i],
-          operator,
-          state: (state ?? 0) as LaunchState,
-          token: token ?? ("0x0" as Address),
-          launchId: launchId ?? BigInt(0),
-          tokenAmount: tokenAmount ?? BigInt(0),
-        });
-      }
-    }
-
-    return launches;
-  }, [allLaunches, multicallResults, address]);
+    if (!address) return [];
+    return allLaunches.filter(
+      (l) => l.operator.toLowerCase() === address.toLowerCase()
+    );
+  }, [allLaunches, address]);
 
   // ============================================
   // Render
   // ============================================
-  const isLoading = isLoadingLaunches || isLoadingDetails || isLoadingDrafts;
+  const isLoading = isLoadingLaunches || isLoadingDrafts;
   const hasContent = myLaunches.length > 0 || drafts.length > 0;
 
   if (isLoading) {
