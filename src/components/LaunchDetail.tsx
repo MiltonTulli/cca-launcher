@@ -393,6 +393,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
   const chainId = useChainId();
   const explorerUrl = EXPLORER_URLS[chainId] || "https://etherscan.io";
   const [transferTo, setTransferTo] = useState("");
+  const [newLiquidityManager, setNewLiquidityManager] = useState("");
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
   const [linkedDraftId, setLinkedDraftId] = useState<string | null>(null);
 
@@ -431,6 +432,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
       { ...contractBase, functionName: "auctionEndTime" },              // [9]
       { ...contractBase, functionName: "distributionDelay" },           // [10]
       { ...contractBase, functionName: "distributionTimestamp" },        // [11]
+      { ...contractBase, functionName: "liquidityManager" },            // [12]
     ],
     query: {
       refetchInterval: 15000,
@@ -454,6 +456,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
   const auctionEndTimeValue = results?.[9]?.result as bigint | undefined;
   const distributionDelayValue = results?.[10]?.result as bigint | undefined;
   const distributionTimestampValue = results?.[11]?.result as bigint | undefined;
+  const liquidityManagerValue = results?.[12]?.result as Address | undefined;
 
   // Derived values
   const currentState = (directState ?? launchInfo?.state ?? 0) as LaunchState;
@@ -466,6 +469,11 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
     !!pendingOp &&
     pendingOp !== ZERO_ADDRESS &&
     connectedAddress.toLowerCase() === pendingOp.toLowerCase();
+  const auctionTimeElapsed =
+    currentState === LaunchState.AUCTION_ACTIVE &&
+    auctionEndTimeValue !== undefined &&
+    Number(auctionEndTimeValue) > 0 &&
+    now >= Number(auctionEndTimeValue);
 
   // ============================================
   // Secondary Multicall: token balance/allowance/role
@@ -1228,8 +1236,8 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
       );
     }
 
-    // AUCTION_ENDED → distribution actions
-    if (currentState === LaunchState.AUCTION_ENDED) {
+    // AUCTION_ENDED (or AUCTION_ACTIVE with time elapsed) → distribution actions
+    if (currentState === LaunchState.AUCTION_ENDED || auctionTimeElapsed) {
       const canAct = isOperator || isPermissionless;
 
       if (canAct) {
@@ -1346,7 +1354,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
 
     // Empty state messages
     if (sections.length === 0) {
-      if (currentState === LaunchState.AUCTION_ACTIVE) {
+      if (currentState === LaunchState.AUCTION_ACTIVE && !auctionTimeElapsed) {
         return (
           <Card>
             <CardHeader className="pb-3">
@@ -1436,29 +1444,60 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {isOperator && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Transfer Operator Role</label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="New operator address (0x...)"
-                  value={transferTo}
-                  onChange={(e) => setTransferTo(e.target.value)}
-                  className="font-mono text-xs"
-                />
-                <ActionButton
-                  label="Transfer"
-                  functionName="transferOperator"
-                  contractAddress={address}
-                  args={[transferTo as Address]}
-                  disabled={!isAddress(transferTo)}
-                  variant="outline"
-                  onSuccess={() => {
-                    setTransferTo("");
-                    handleRefetch();
-                  }}
-                />
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Transfer Operator Role</label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="New operator address (0x...)"
+                    value={transferTo}
+                    onChange={(e) => setTransferTo(e.target.value)}
+                    className="font-mono text-xs"
+                  />
+                  <ActionButton
+                    label="Transfer"
+                    functionName="transferOperator"
+                    contractAddress={address}
+                    args={[transferTo as Address]}
+                    disabled={!isAddress(transferTo)}
+                    variant="outline"
+                    onSuccess={() => {
+                      setTransferTo("");
+                      handleRefetch();
+                    }}
+                  />
+                </div>
               </div>
-            </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Update Liquidity Manager</label>
+                {liquidityManagerValue && liquidityManagerValue !== ZERO_ADDRESS && (
+                  <p className="text-xs text-muted-foreground">
+                    Current: <span className="font-mono">{shortenAddress(liquidityManagerValue)}</span>
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="New liquidity manager address (0x...)"
+                    value={newLiquidityManager}
+                    onChange={(e) => setNewLiquidityManager(e.target.value)}
+                    className="font-mono text-xs"
+                  />
+                  <ActionButton
+                    label="Update"
+                    functionName="updateLiquidityManager"
+                    contractAddress={address}
+                    args={[newLiquidityManager as Address]}
+                    disabled={!isAddress(newLiquidityManager)}
+                    variant="outline"
+                    onSuccess={() => {
+                      setNewLiquidityManager("");
+                      handleRefetch();
+                    }}
+                  />
+                </div>
+              </div>
+            </>
           )}
 
           {pendingOp && pendingOp !== ZERO_ADDRESS && (

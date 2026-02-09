@@ -776,6 +776,21 @@ interface LaunchSuccessViewProps {
 }
 
 function LaunchSuccessView({ result, chainId }: LaunchSuccessViewProps) {
+  const router = useRouter();
+  const [countdown, setCountdown] = useState(5);
+
+  const launchPath = `/launch/${result.launcherAddress}`;
+
+  // Auto-redirect countdown
+  useEffect(() => {
+    if (countdown <= 0) {
+      router.push(launchPath);
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown, router, launchPath]);
+
   const getExplorerUrl = (hash: string) => {
     const explorers: Record<number, string> = {
       1: "https://etherscan.io",
@@ -921,21 +936,34 @@ function LaunchSuccessView({ result, chainId }: LaunchSuccessViewProps) {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3">
           <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => window.location.reload()}
+            className="w-full"
+            onClick={() => router.push(launchPath)}
           >
-            Create Another Launch
-          </Button>
-          <Button
-            className="flex-1"
-            onClick={() => window.open(getAddressUrl(result.launcherAddress), "_blank")}
-          >
-            View Orchestrator
+            Go to Launch
             <ExternalLink className="h-4 w-4" />
           </Button>
+          <p className="text-xs text-center text-muted-foreground">
+            Redirecting in {countdown}s...
+          </p>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => window.location.reload()}
+            >
+              Create Another Launch
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => window.open(getAddressUrl(result.launcherAddress), "_blank")}
+            >
+              View on Explorer
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
