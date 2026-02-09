@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createDraft, updateDraft } from "@/lib/drafts";
+import { linkLaunchToDraft } from "@/lib/launch-draft";
 
 interface LaunchResult {
   launchId: bigint;
@@ -305,8 +306,13 @@ export function LaunchForm({ initialValues, mode = "create", draftId, onDraftSav
         txHash: hash,
         params: formValues,
       });
+
+      // Fire-and-forget: link this launch back to its draft
+      if (mode === "draft" && draftId && launcherAddress !== "0x0000000000000000000000000000000000000000") {
+        linkLaunchToDraft(launcherAddress, draftId).catch(() => {});
+      }
     }
-  }, [isSuccess, receipt, hash, launchResult, formValues]);
+  }, [isSuccess, receipt, hash, launchResult, formValues, mode, draftId]);
 
   // Show success view
   if (isSuccess && launchResult) {

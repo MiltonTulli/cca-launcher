@@ -15,8 +15,6 @@ import {
 import { useAccount } from "wagmi";
 import {
   FileText,
-  Copy,
-  Check,
   AlertCircle,
   RefreshCw,
   Clock,
@@ -27,6 +25,8 @@ import {
   ArrowLeft,
   Eye,
 } from "lucide-react";
+import { ShareBar } from "@/components/ShareBar";
+import { CommentsSection } from "@/components/CommentsSection";
 
 interface DraftViewProps {
   id: string;
@@ -44,7 +44,6 @@ export function DraftView({ id }: DraftViewProps) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   const fetchDraft = useCallback(async () => {
@@ -68,12 +67,7 @@ export function DraftView({ id }: DraftViewProps) {
     ? address?.toLowerCase() === draft.owner.toLowerCase()
     : false;
 
-  const handleCopyLink = useCallback(async () => {
-    const url = `${window.location.origin}/draft/${id}`;
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [id]);
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/draft/${id}` : "";
 
   const handleDraftSaved = useCallback(() => {
     setIsEditing(false);
@@ -208,19 +202,7 @@ export function DraftView({ id }: DraftViewProps) {
           </div>
 
           <div className="mt-4">
-            <Button variant="outline" size="sm" onClick={handleCopyLink}>
-              {copied ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" />
-                  Copy Share Link
-                </>
-              )}
-            </Button>
+            <ShareBar url={shareUrl} text="Check out this token launch draft on Tally Launch" />
           </div>
         </CardContent>
       </Card>
@@ -322,6 +304,9 @@ export function DraftView({ id }: DraftViewProps) {
           </Button>
         )}
       </div>
+
+      {/* Comments */}
+      <CommentsSection resourceType="draft" resourceId={id} />
     </div>
   );
 }

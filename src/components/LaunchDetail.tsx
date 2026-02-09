@@ -33,11 +33,16 @@ import {
   Shield,
   Info,
   FlaskConical,
+  FileText,
 } from "lucide-react";
 import {
   simulateTransaction,
   type SimulationResult,
 } from "@/lib/simulate";
+import { ShareBar } from "@/components/ShareBar";
+import { CommentsSection } from "@/components/CommentsSection";
+import { getDraftForLaunch } from "@/lib/launch-draft";
+import Link from "next/link";
 
 // ============================================
 // Types
@@ -389,12 +394,18 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
   const explorerUrl = EXPLORER_URLS[chainId] || "https://etherscan.io";
   const [transferTo, setTransferTo] = useState("");
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
+  const [linkedDraftId, setLinkedDraftId] = useState<string | null>(null);
 
   // Tick every second for countdowns
   useEffect(() => {
     const interval = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Load linked draft ID
+  useEffect(() => {
+    getDraftForLaunch(address).then(setLinkedDraftId).catch(() => {});
+  }, [address]);
 
   // ============================================
   // Primary Multicall: orchestrator data
@@ -910,6 +921,21 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
             You are the operator
           </span>
         )}
+        {linkedDraftId && (
+          <Link
+            href={`/draft/${linkedDraftId}`}
+            className="inline-flex items-center gap-1 mt-2 text-xs text-blue-700 bg-blue-100 rounded-full px-2.5 py-0.5 hover:bg-blue-200 transition-colors"
+          >
+            <FileText className="h-3 w-3" />
+            Created from draft
+          </Link>
+        )}
+        <div className="mt-2">
+          <ShareBar
+            url={typeof window !== "undefined" ? `${window.location.origin}/launch/${address}` : ""}
+            text={`Check out Launch #${launchInfo.launchId.toString()} on Tally Launch`}
+          />
+        </div>
       </div>
       <Button variant="outline" size="sm" onClick={handleRefetch}>
         <RefreshCw className="h-4 w-4" />
@@ -1468,6 +1494,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
       {renderDistributionInfo()}
       {renderActions()}
       {renderOperatorManagement()}
+      <CommentsSection resourceType="launch" resourceId={address} />
     </div>
   );
 }
