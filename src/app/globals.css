@@ -75,6 +75,28 @@
   }
 }
 
+/* =============================================================================
+   AppKit / Web3Modal button light-mode fix
+   In light mode the button inherits dark backgrounds; force light styling.
+   ============================================================================= */
+:root appkit-button,
+:root appkit-connect-button {
+  --wui-color-bg-150: #f5f5f5;
+  --wui-color-bg-200: #ebebeb;
+  --wui-color-fg-100: #141414;
+  --wui-color-fg-150: #404040;
+  --wui-color-fg-200: #6e6e6e;
+}
+
+.dark appkit-button,
+.dark appkit-connect-button {
+  --wui-color-bg-150: initial;
+  --wui-color-bg-200: initial;
+  --wui-color-fg-100: initial;
+  --wui-color-fg-150: initial;
+  --wui-color-fg-200: initial;
+}
+
 /* Hide number input spinners */
 .no-spinner::-webkit-inner-spin-button,
 .no-spinner::-webkit-outer-spin-button {

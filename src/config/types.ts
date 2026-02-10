@@ -1,5 +1,5 @@
 import { Address } from "viem";
-import { TokenSource } from "./enums";
+import { TokenSource, BidStatus } from "./enums";
 import { SEPOLIA_CONTRACTS } from "./addresses";
 
 // ============================================
@@ -235,3 +235,42 @@ export const WIZARD_STEPS = [
 ] as const;
 
 export type WizardStepId = (typeof WIZARD_STEPS)[number]["id"];
+
+// ============================================
+// CCA TYPES
+// ============================================
+
+/** On-chain Bid struct from CCA contract */
+export interface CCABidStruct {
+  startBlock: bigint;
+  startCumulativeMps: number;
+  exitedBlock: bigint;
+  maxPrice: bigint;
+  owner: Address;
+  amountQ96: bigint;
+  tokensFilled: bigint;
+}
+
+/** Enriched bid entry for UI */
+export interface CCABidEntry {
+  bidId: number;
+  bid: CCABidStruct;
+  isUserBid: boolean;
+  status: BidStatus;
+}
+
+/** Sale entry for the sales list page */
+export interface SaleEntry {
+  ccaAddress: Address;
+  orchestratorAddress: Address;
+  token: Address;
+  launchId: bigint;
+  launchState: number;
+  startTime: bigint;
+  endTime: bigint;
+  currentPrice: bigint;
+  tokensSold: bigint;
+  totalRaised: bigint;
+  isActive: boolean;
+  hasEnded: boolean;
+}

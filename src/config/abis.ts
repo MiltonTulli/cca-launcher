@@ -586,3 +586,419 @@ export const ACCESS_CONTROL_ABI = [
 
 // keccak256("MINTER_ROLE")
 export const MINTER_ROLE = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6" as const;
+
+// ============================================
+// PERMIT2 ABI (minimal for approve + allowance)
+// ============================================
+export const PERMIT2_ABI = [
+  {
+    type: "function",
+    name: "approve",
+    inputs: [
+      { name: "token", type: "address", internalType: "address" },
+      { name: "spender", type: "address", internalType: "address" },
+      { name: "amount", type: "uint160", internalType: "uint160" },
+      { name: "expiration", type: "uint48", internalType: "uint48" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "allowance",
+    inputs: [
+      { name: "owner", type: "address", internalType: "address" },
+      { name: "token", type: "address", internalType: "address" },
+      { name: "spender", type: "address", internalType: "address" },
+    ],
+    outputs: [
+      { name: "amount", type: "uint160", internalType: "uint160" },
+      { name: "expiration", type: "uint48", internalType: "uint48" },
+      { name: "nonce", type: "uint48", internalType: "uint48" },
+    ],
+    stateMutability: "view",
+  },
+] as const;
+
+// Canonical Permit2 address (same on all chains)
+export const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3" as const;
+
+// ============================================
+// ERC20 EXTENDED ABI (approve + metadata)
+// ============================================
+export const ERC20_EXTENDED_ABI = [
+  {
+    type: "function",
+    name: "balanceOf",
+    inputs: [{ name: "account", type: "address", internalType: "address" }],
+    outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "allowance",
+    inputs: [
+      { name: "owner", type: "address", internalType: "address" },
+      { name: "spender", type: "address", internalType: "address" },
+    ],
+    outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "approve",
+    inputs: [
+      { name: "spender", type: "address", internalType: "address" },
+      { name: "amount", type: "uint256", internalType: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool", internalType: "bool" }],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "decimals",
+    inputs: [],
+    outputs: [{ name: "", type: "uint8", internalType: "uint8" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "symbol",
+    inputs: [],
+    outputs: [{ name: "", type: "string", internalType: "string" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "name",
+    inputs: [],
+    outputs: [{ name: "", type: "string", internalType: "string" }],
+    stateMutability: "view",
+  },
+] as const;
+
+// ============================================
+// CCA AUCTION ABI
+// ============================================
+export const CCA_AUCTION_ABI = [
+  // Errors
+  { type: "error", name: "InvalidTokenAmountReceived", inputs: [] },
+  { type: "error", name: "InvalidAmount", inputs: [] },
+  { type: "error", name: "BidOwnerCannotBeZeroAddress", inputs: [] },
+  { type: "error", name: "BidMustBeAboveClearingPrice", inputs: [] },
+  {
+    type: "error",
+    name: "InvalidBidPriceTooHigh",
+    inputs: [
+      { name: "maxPrice", type: "uint256" },
+      { name: "maxBidPrice", type: "uint256" },
+    ],
+  },
+  { type: "error", name: "BidAmountTooSmall", inputs: [] },
+  { type: "error", name: "CurrencyIsNotNative", inputs: [] },
+  { type: "error", name: "AuctionNotStarted", inputs: [] },
+  { type: "error", name: "TokensNotReceived", inputs: [] },
+  { type: "error", name: "ClaimBlockIsBeforeEndBlock", inputs: [] },
+  {
+    type: "error",
+    name: "FloorPriceAndTickSpacingGreaterThanMaxBidPrice",
+    inputs: [
+      { name: "nextTick", type: "uint256" },
+      { name: "maxBidPrice", type: "uint256" },
+    ],
+  },
+  { type: "error", name: "FloorPriceAndTickSpacingTooLarge", inputs: [] },
+  { type: "error", name: "BidAlreadyExited", inputs: [] },
+  { type: "error", name: "CannotExitBid", inputs: [] },
+  { type: "error", name: "CannotPartiallyExitBidBeforeEndBlock", inputs: [] },
+  { type: "error", name: "InvalidLastFullyFilledCheckpointHint", inputs: [] },
+  { type: "error", name: "InvalidOutbidBlockCheckpointHint", inputs: [] },
+  { type: "error", name: "NotClaimable", inputs: [] },
+  {
+    type: "error",
+    name: "BatchClaimDifferentOwner",
+    inputs: [
+      { name: "expectedOwner", type: "address" },
+      { name: "receivedOwner", type: "address" },
+    ],
+  },
+  { type: "error", name: "BidNotExited", inputs: [] },
+  { type: "error", name: "CannotPartiallyExitBidBeforeGraduation", inputs: [] },
+  { type: "error", name: "TokenTransferFailed", inputs: [] },
+  { type: "error", name: "AuctionIsNotOver", inputs: [] },
+  { type: "error", name: "InvalidBidUnableToClear", inputs: [] },
+  { type: "error", name: "AuctionSoldOut", inputs: [] },
+  { type: "error", name: "BidIdDoesNotExist", inputs: [{ name: "bidId", type: "uint256" }] },
+
+  // View Functions
+  {
+    type: "function",
+    name: "MAX_BID_PRICE",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "token",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "currency",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "startBlock",
+    inputs: [],
+    outputs: [{ name: "", type: "uint64" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "endBlock",
+    inputs: [],
+    outputs: [{ name: "", type: "uint64" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "claimBlock",
+    inputs: [],
+    outputs: [{ name: "", type: "uint64" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "totalSupply",
+    inputs: [],
+    outputs: [{ name: "", type: "uint128" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "floorPrice",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "tickSpacing",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "clearingPrice",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "currencyRaised",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "isGraduated",
+    inputs: [],
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "tokensRecipient",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "fundsRecipient",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "validationHook",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "nextBidId",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "bids",
+    inputs: [{ name: "bidId", type: "uint256", internalType: "uint256" }],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        internalType: "struct Bid",
+        components: [
+          { name: "startBlock", type: "uint64", internalType: "uint64" },
+          { name: "startCumulativeMps", type: "uint24", internalType: "uint24" },
+          { name: "exitedBlock", type: "uint64", internalType: "uint64" },
+          { name: "maxPrice", type: "uint256", internalType: "uint256" },
+          { name: "owner", type: "address", internalType: "address" },
+          { name: "amountQ96", type: "uint256", internalType: "uint256" },
+          { name: "tokensFilled", type: "uint256", internalType: "uint256" },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+
+  // Write Functions
+  {
+    type: "function",
+    name: "submitBid",
+    inputs: [
+      { name: "maxPrice", type: "uint256" },
+      { name: "amount", type: "uint128" },
+      { name: "owner", type: "address" },
+      { name: "hookData", type: "bytes" },
+    ],
+    outputs: [{ name: "bidId", type: "uint256" }],
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "exitBid",
+    inputs: [{ name: "bidId", type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "exitPartiallyFilledBid",
+    inputs: [
+      { name: "bidId", type: "uint256", internalType: "uint256" },
+      { name: "lastFullyFilledCheckpointBlock", type: "uint64", internalType: "uint64" },
+      { name: "outbidBlock", type: "uint64", internalType: "uint64" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "claimTokens",
+    inputs: [{ name: "bidId", type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "claimTokensBatch",
+    inputs: [
+      { name: "owner", type: "address", internalType: "address" },
+      { name: "bidIds", type: "uint256[]", internalType: "uint256[]" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "checkpoint",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        components: [
+          { name: "clearingPrice", type: "uint256" },
+          { name: "totalCleared", type: "uint256" },
+          { name: "availableSupply", type: "uint256" },
+          { name: "cumulativeMps", type: "uint24" },
+          { name: "lastCheckpointBlock", type: "uint64" },
+          { name: "currentStepEndBlock", type: "uint64" },
+        ],
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "sweepTokens",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "sweepFunds",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  // Events
+  {
+    type: "event",
+    name: "TokensReceived",
+    inputs: [{ name: "totalSupply", type: "uint128", indexed: false }],
+  },
+  {
+    type: "event",
+    name: "BidSubmitted",
+    inputs: [
+      { name: "bidId", type: "uint256", indexed: true },
+      { name: "owner", type: "address", indexed: true },
+      { name: "maxPrice", type: "uint256", indexed: false },
+      { name: "amount", type: "uint128", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "BidExited",
+    inputs: [
+      { name: "bidId", type: "uint256", indexed: true },
+      { name: "owner", type: "address", indexed: true },
+      { name: "tokensFilled", type: "uint256", indexed: false },
+      { name: "refund", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "TokensClaimed",
+    inputs: [
+      { name: "bidId", type: "uint256", indexed: true },
+      { name: "owner", type: "address", indexed: true },
+      { name: "tokensFilled", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "ClearingPriceUpdated",
+    inputs: [
+      { name: "blockNumber", type: "uint64", indexed: false },
+      { name: "clearingPrice", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "CheckpointUpdated",
+    inputs: [
+      { name: "blockNumber", type: "uint64", indexed: false },
+      { name: "clearingPrice", type: "uint256", indexed: false },
+      { name: "cumulativeMps", type: "uint24", indexed: false },
+    ],
+  },
+] as const;

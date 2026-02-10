@@ -30,3 +30,8 @@ export const LAUNCH_CONSTRAINTS = {
   MAX_DISTRIBUTION_DELAY: 2592000, // 30 days in seconds
   BASIS_POINTS: 10000,
 } as const;
+
+// ============================================
+// Q96 FIXED-POINT CONSTANT (2^96)
+// ============================================
+export const Q96 = BigInt("79228162514264337593543950336"); // 2^96

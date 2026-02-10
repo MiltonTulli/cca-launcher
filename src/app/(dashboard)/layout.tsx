@@ -8,15 +8,21 @@ import { useEffect, useState } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { TALLY_LAUNCH_FACTORY_ADDRESSES } from "@/config/contracts";
 import { ZERO_ADDRESS } from "@/lib/utils";
-import { AlertCircle, Plus, List, Globe } from "lucide-react";
+import { AlertCircle, Plus, List, Globe, ShoppingCart, type LucideIcon } from "lucide-react";
 import { NetworkBadge } from "@/components/NetworkBadge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Footer } from "@/components/Footer";
 
-const NAV_ITEMS = [
-  { label: "New Launch", href: "/new", icon: Plus },
-  { label: "All Launches", href: "/launches", icon: Globe },
-] as const;
+interface NavItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
 
 export default function DashboardLayout({
   children,
@@ -38,16 +44,33 @@ export default function DashboardLayout({
   const logoSrc =
     mounted && resolvedTheme === "dark" ? "/tally-dark.svg" : "/tally.svg";
 
-  const navItems = [
-    ...NAV_ITEMS,
-    ...(isConnected
-      ? [{ label: "My Launches", href: "/my-launches", icon: List } as const]
-      : []),
+  const navSections: NavSection[] = [
+    {
+      label: "LAUNCH",
+      items: [
+        { label: "New Launch", href: "/new", icon: Plus },
+        { label: "All Launches", href: "/launches", icon: Globe },
+        ...(isConnected
+          ? [{ label: "My Launches", href: "/my-launches", icon: List }]
+          : []),
+      ],
+    },
+    {
+      label: "SALE",
+      items: [
+        { label: "All Sales", href: "/sales", icon: ShoppingCart },
+      ],
+    },
   ];
+
+  const allNavItems = navSections.flatMap((s) => s.items);
 
   function isActive(href: string) {
     if (href === "/launches") {
       return pathname === "/launches" || pathname.startsWith("/launches/");
+    }
+    if (href === "/sales") {
+      return pathname === "/sales" || pathname.startsWith("/sales/");
     }
     return pathname === href || pathname.startsWith(href + "/");
   }
@@ -84,12 +107,12 @@ export default function DashboardLayout({
 
       {/* Mobile tabs */}
       <div className="md:hidden w-full border-b">
-        <div className="flex">
-          {navItems.map((item) => (
+        <div className="flex overflow-x-auto">
+          {allNavItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors border-b-2 ${
+              className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors border-b-2 ${
                 isActive(item.href)
                   ? "border-foreground text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -105,27 +128,36 @@ export default function DashboardLayout({
       <div className="flex flex-1">
         {/* Sidebar - hidden on mobile */}
         <aside className="hidden md:flex w-56 flex-col border-r p-3">
-          <nav className="space-y-0.5">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive(item.href)
-                    ? "bg-secondary text-foreground"
-                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
+          <nav className="space-y-4">
+            {navSections.map((section) => (
+              <div key={section.label}>
+                <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {section.label}
+                </div>
+                <div className="space-y-0.5">
+                  {section.items.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                        isActive(item.href)
+                          ? "bg-secondary text-foreground"
+                          : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                      }`}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
         </aside>
 
         {/* Content Area */}
         <div className="flex-1 min-w-0">
-          <div className="container mx-auto px-4 py-6 sm:py-10 max-w-4xl">
+          <div className="container mx-auto px-4 py-6 sm:py-10 max-w-6xl">
             {/* Network Warning */}
             {!isDeployed && (
               <div className="max-w-2xl mx-auto mb-6">

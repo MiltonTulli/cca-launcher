@@ -48,3 +48,39 @@ export const LAUNCH_STATE_COLORS: Record<LaunchState, string> = {
   [LaunchState.LOCKED]: "bg-orange-100 text-orange-700",
   [LaunchState.UNLOCKED]: "bg-green-100 text-green-700",
 };
+
+// ============================================
+// CCA PHASE ENUM
+// ============================================
+export enum CCAPhase {
+  COMING_SOON = 0,
+  LIVE = 1,
+  ENDED = 2,
+  CLAIMABLE = 3,
+  FAILED = 4,
+}
+
+export const CCA_PHASE_LABELS: Record<CCAPhase, string> = {
+  [CCAPhase.COMING_SOON]: "Coming Soon",
+  [CCAPhase.LIVE]: "Live",
+  [CCAPhase.ENDED]: "Ended",
+  [CCAPhase.CLAIMABLE]: "Claimable",
+  [CCAPhase.FAILED]: "Failed",
+};
+
+export const CCA_PHASE_COLORS: Record<CCAPhase, string> = {
+  [CCAPhase.COMING_SOON]: "bg-blue-100 text-blue-700",
+  [CCAPhase.LIVE]: "bg-green-100 text-green-700",
+  [CCAPhase.ENDED]: "bg-yellow-100 text-yellow-700",
+  [CCAPhase.CLAIMABLE]: "bg-purple-100 text-purple-700",
+  [CCAPhase.FAILED]: "bg-red-100 text-red-700",
+};
+
+// ============================================
+// BID STATUS ENUM
+// ============================================
+export enum BidStatus {
+  ACTIVE = "ACTIVE",
+  EXITED = "EXITED",
+  CLAIMED = "CLAIMED",
+}
