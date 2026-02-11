@@ -1,6 +1,7 @@
 "use client";
 
 import { LaunchForm } from "@/components/launch-form";
+import { FactoryBanner } from "@/components/FactoryBanner";
 
 function InfoCard({ title, description }: { title: string; description: string }) {
   return (
@@ -14,6 +15,10 @@ function InfoCard({ title, description }: { title: string; description: string }
 export default function NewLaunchPage() {
   return (
     <>
+      <div className="mb-6">
+        <FactoryBanner />
+      </div>
+
       {/* Hero Section */}
       <div className="mb-6 sm:mb-10 text-center">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">
