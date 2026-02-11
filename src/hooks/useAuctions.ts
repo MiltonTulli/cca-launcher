@@ -7,16 +7,18 @@ import {
   TALLY_LAUNCH_FACTORY_ABI,
   TALLY_LAUNCH_FACTORY_ADDRESSES,
   TALLY_LAUNCH_ORCHESTRATOR_ABI,
+  CCA_AUCTION_ABI,
+  ERC20_ABI,
   LaunchState,
 } from "@/config/contracts";
 import { ZERO_ADDRESS } from "@/lib/utils";
-import type { SaleEntry } from "@/config/types";
+import type { AuctionEntry } from "@/config/types";
 
 /**
- * Fetches all CCA sales by scanning launches and filtering those
+ * Fetches all CCA auctions by scanning launches and filtering those
  * with an active/ended auction (state >= AUCTION_ACTIVE) and a non-zero CCA address.
  */
-export function useSales() {
+export function useAuctions() {
   const chainId = useChainId();
   const contractAddress = TALLY_LAUNCH_FACTORY_ADDRESSES[chainId];
   const enabled = !!contractAddress && contractAddress !== ZERO_ADDRESS;
@@ -75,11 +77,11 @@ export function useSales() {
     query: { enabled: detailContracts.length > 0, staleTime: 30_000 },
   });
 
-  // Step 4: Parse and filter
-  const sales: SaleEntry[] = useMemo(() => {
+  // Step 4: Parse and filter (without metadata)
+  const baseAuctions = useMemo(() => {
     if (launchAddresses.length === 0 || !detailResults) return [];
 
-    const result: SaleEntry[] = [];
+    const result: Omit<AuctionEntry, "tokenSymbol" | "tokenDecimals" | "currencySymbol" | "currencyDecimals">[] = [];
     for (let i = 0; i < launchAddresses.length; i++) {
       const base = i * FIELDS_PER_LAUNCH;
       const state = (detailResults[base]?.result as number | undefined) ?? 0;
@@ -113,7 +115,87 @@ export function useSales() {
     return result;
   }, [launchAddresses, detailResults]);
 
-  const isLoading = isLoadingCount || isLoadingAddresses || isLoadingDetails;
+  // Step 5: Fetch currency address from each CCA contract
+  const currencyContracts = useMemo(() => {
+    if (baseAuctions.length === 0) return [];
+    return baseAuctions.map((a) => ({
+      address: a.ccaAddress,
+      abi: CCA_AUCTION_ABI,
+      functionName: "currency" as const,
+    }));
+  }, [baseAuctions]);
 
-  return { sales, isLoading, refetch };
+  const { data: currencyResults, isLoading: isLoadingCurrency } = useReadContracts({
+    contracts: currencyContracts,
+    query: { enabled: currencyContracts.length > 0, staleTime: 60_000 },
+  });
+
+  const currencyByAuction = useMemo(() => {
+    const map = new Map<Address, Address>();
+    if (!currencyResults) return map;
+    for (let i = 0; i < baseAuctions.length; i++) {
+      const curr = currencyResults[i]?.result as Address | undefined;
+      if (curr) map.set(baseAuctions[i].ccaAddress, curr);
+    }
+    return map;
+  }, [baseAuctions, currencyResults]);
+
+  // Step 6: Fetch token + currency metadata (symbol + decimals) for all unique addresses
+  const META_FIELDS = 2;
+  const uniqueAddresses = useMemo(() => {
+    const set = new Set<Address>();
+    for (const a of baseAuctions) {
+      if (a.token && a.token !== ZERO_ADDRESS) set.add(a.token);
+    }
+    for (const curr of currencyByAuction.values()) {
+      if (curr && curr !== ZERO_ADDRESS) set.add(curr);
+    }
+    return Array.from(set);
+  }, [baseAuctions, currencyByAuction]);
+
+  const metaContracts = useMemo(() => {
+    if (uniqueAddresses.length === 0) return [];
+    return uniqueAddresses.flatMap((addr) => [
+      { address: addr, abi: ERC20_ABI, functionName: "symbol" as const },
+      { address: addr, abi: ERC20_ABI, functionName: "decimals" as const },
+    ]);
+  }, [uniqueAddresses]);
+
+  const { data: metaResults, isLoading: isLoadingMeta } = useReadContracts({
+    contracts: metaContracts,
+    query: { enabled: metaContracts.length > 0, staleTime: 60_000 },
+  });
+
+  const metaMap = useMemo(() => {
+    const map = new Map<Address, { symbol?: string; decimals?: number }>();
+    if (!metaResults) return map;
+    for (let i = 0; i < uniqueAddresses.length; i++) {
+      const base = i * META_FIELDS;
+      map.set(uniqueAddresses[i], {
+        symbol: metaResults[base]?.result as string | undefined,
+        decimals: metaResults[base + 1]?.result as number | undefined,
+      });
+    }
+    return map;
+  }, [uniqueAddresses, metaResults]);
+
+  // Step 7: Merge metadata into auctions
+  const auctions: AuctionEntry[] = useMemo(() => {
+    return baseAuctions.map((a) => {
+      const tokenMeta = metaMap.get(a.token);
+      const currencyAddr = currencyByAuction.get(a.ccaAddress);
+      const currencyMeta = currencyAddr ? metaMap.get(currencyAddr) : undefined;
+      return {
+        ...a,
+        tokenSymbol: tokenMeta?.symbol,
+        tokenDecimals: tokenMeta?.decimals,
+        currencySymbol: currencyMeta?.symbol,
+        currencyDecimals: currencyMeta?.decimals,
+      };
+    });
+  }, [baseAuctions, metaMap, currencyByAuction]);
+
+  const isLoading = isLoadingCount || isLoadingAddresses || isLoadingDetails || isLoadingCurrency || isLoadingMeta;
+
+  return { auctions, isLoading, refetch };
 }

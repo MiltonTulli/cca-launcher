@@ -20,7 +20,7 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-type Mode = "launches" | "sales";
+type Mode = "launches" | "auctions";
 
 export default function DashboardLayout({
   children,
@@ -44,7 +44,7 @@ export default function DashboardLayout({
     mounted && resolvedTheme === "dark" ? "/tally-dark.svg" : "/tally.svg";
 
   // Auto-detect active mode from route
-  const activeMode: Mode = pathname.startsWith("/sales") ? "sales" : "launches";
+  const activeMode: Mode = pathname.startsWith("/auctions") ? "auctions" : "launches";
 
   const navItemsByMode: Record<Mode, NavItem[]> = {
     launches: [
@@ -54,8 +54,8 @@ export default function DashboardLayout({
         ? [{ label: "My Launches", href: "/my-launches", icon: List }]
         : []),
     ],
-    sales: [
-      { label: "All Sales", href: "/sales", icon: ShoppingCart },
+    auctions: [
+      { label: "All Auctions", href: "/auctions", icon: ShoppingCart },
     ],
   };
 
@@ -71,15 +71,15 @@ export default function DashboardLayout({
     if (href === "/launches/new") {
       return pathname === "/launches/new";
     }
-    if (href === "/sales") {
-      return pathname === "/sales" || pathname.startsWith("/sales/");
+    if (href === "/auctions") {
+      return pathname === "/auctions" || pathname.startsWith("/auctions/");
     }
     return pathname === href || pathname.startsWith(href + "/");
   }
 
   function handleToggle(mode: Mode) {
     if (mode === activeMode) return;
-    router.push(mode === "launches" ? "/launches" : "/sales");
+    router.push(mode === "launches" ? "/launches" : "/auctions");
   }
 
   return (
@@ -128,14 +128,14 @@ export default function DashboardLayout({
               Launches
             </button>
             <button
-              onClick={() => handleToggle("sales")}
+              onClick={() => handleToggle("auctions")}
               className={`rounded-md px-4 py-1.5 text-xs font-medium transition-colors ${
-                activeMode === "sales"
+                activeMode === "auctions"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Sales
+              Auctions
             </button>
           </div>
         </div>
@@ -174,14 +174,14 @@ export default function DashboardLayout({
               Launches
             </button>
             <button
-              onClick={() => handleToggle("sales")}
+              onClick={() => handleToggle("auctions")}
               className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
-                activeMode === "sales"
+                activeMode === "auctions"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Sales
+              Auctions
             </button>
           </div>
 

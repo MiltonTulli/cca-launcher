@@ -75,7 +75,7 @@ export function KeyMetrics({ data }: KeyMetricsProps) {
       {/* Metric cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          label="Tokens for Sale"
+          label="Tokens for Auction"
           value={
             totalSupply !== undefined
               ? `${formatUnits(totalSupply, tDec)} ${tokenSymbol ?? ""}`

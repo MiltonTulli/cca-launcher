@@ -11,17 +11,17 @@ import { Spinner } from "@/components/ui/spinner";
 import { CheckCircle2 } from "lucide-react";
 import { CCA_AUCTION_ABI, CCAPhase } from "@/config/contracts";
 
-interface SaleActionsPanelProps {
+interface AuctionActionsPanelProps {
   ccaAddress: Address;
   phase: CCAPhase;
   onRefresh: () => void;
 }
 
-export function SaleActionsPanel({
+export function AuctionActionsPanel({
   ccaAddress,
   phase,
   onRefresh,
-}: SaleActionsPanelProps) {
+}: AuctionActionsPanelProps) {
   if (phase < CCAPhase.ENDED) return null;
 
   return (

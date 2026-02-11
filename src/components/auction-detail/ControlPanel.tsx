@@ -351,7 +351,7 @@ function BidFormContent({
             </div>
             <p className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 leading-relaxed">
               Spend a max of {amount} {currencySymbol ?? "ETH"} to buy{" "}
-              {data.tokenSymbol ?? "tokens"} throughout the sale. Your bid will
+              {data.tokenSymbol ?? "tokens"} throughout the auction. Your bid will
               fill at whatever the clearing price is.
             </p>
           </div>

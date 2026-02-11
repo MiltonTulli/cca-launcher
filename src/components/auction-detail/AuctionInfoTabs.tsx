@@ -16,9 +16,9 @@ import { q96PriceToDisplay, blocksToTimeEstimate } from "@/lib/q96";
 import { ZERO_ADDRESS } from "@/lib/utils";
 import type { UseCCADataReturn } from "@/hooks/useCCAData";
 
-type TabId = "sale-details" | "how-it-works" | "token-overview";
+type TabId = "auction-details" | "how-it-works" | "token-overview";
 
-interface SaleInfoTabsProps {
+interface AuctionInfoTabsProps {
   data: UseCCADataReturn;
 }
 
@@ -70,8 +70,8 @@ function InfoBlock({
   );
 }
 
-export function SaleInfoTabs({ data }: SaleInfoTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("sale-details");
+export function AuctionInfoTabs({ data }: AuctionInfoTabsProps) {
+  const [activeTab, setActiveTab] = useState<TabId>("auction-details");
 
   const {
     tokenAddress,
@@ -102,16 +102,16 @@ export function SaleInfoTabs({ data }: SaleInfoTabsProps) {
       <div className="px-6 py-4 overflow-x-auto">
         <div className="bg-muted p-1 rounded-lg inline-flex min-w-max">
           <TabButton
-            active={activeTab === "sale-details"}
-            onClick={() => setActiveTab("sale-details")}
+            active={activeTab === "auction-details"}
+            onClick={() => setActiveTab("auction-details")}
           >
-            Sale Details
+            Auction Details
           </TabButton>
           <TabButton
             active={activeTab === "how-it-works"}
             onClick={() => setActiveTab("how-it-works")}
           >
-            How the Sale Works
+            How the Auction Works
           </TabButton>
           <TabButton
             active={activeTab === "token-overview"}
@@ -124,12 +124,12 @@ export function SaleInfoTabs({ data }: SaleInfoTabsProps) {
 
       {/* Tab content */}
       <div className="p-6 md:p-8">
-        {/* Sale Details */}
-        {activeTab === "sale-details" && (
+        {/* Auction Details */}
+        {activeTab === "auction-details" && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div>
               <SectionTitle>
-                <Coins className="w-4 h-4" /> Sale Parameters
+                <Coins className="w-4 h-4" /> Auction Parameters
               </SectionTitle>
               <div className="space-y-1">
                 <InfoRow
@@ -145,7 +145,7 @@ export function SaleInfoTabs({ data }: SaleInfoTabsProps) {
                   explorerUrl={explorerUrl}
                 />
                 <InfoRow
-                  label="Tokens for Sale"
+                  label="Tokens for Auction"
                   value={
                     totalSupply !== undefined
                       ? `${formatUnits(totalSupply, tDec)} ${tokenSymbol ?? ""}`
@@ -291,7 +291,7 @@ export function SaleInfoTabs({ data }: SaleInfoTabsProps) {
           </div>
         )}
 
-        {/* How the Sale Works */}
+        {/* How the Auction Works */}
         {activeTab === "how-it-works" && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -342,8 +342,8 @@ export function SaleInfoTabs({ data }: SaleInfoTabsProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InfoBlock title="Sale Mechanism">
-                This sale uses the Continuous Clearing Auction (CCA). It is a
+              <InfoBlock title="Auction Mechanism">
+                This auction uses the Continuous Clearing Auction (CCA). It is a
                 streaming auction where capital commits are split over time. This
                 discovery mechanism prevents front-running and ensures a fair
                 clearing price for all participants.
@@ -380,7 +380,7 @@ export function SaleInfoTabs({ data }: SaleInfoTabsProps) {
                       Terms of Service
                     </strong>
                     By participating in this auction, you acknowledge and accept
-                    the risks associated with token sales and smart contract
+                    the risks associated with token auctions and smart contract
                     interactions.
                   </div>
                 </div>

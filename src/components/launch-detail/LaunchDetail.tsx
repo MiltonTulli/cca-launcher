@@ -93,7 +93,7 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
     );
   }
 
-  const showSaleCTA =
+  const showAuctionCTA =
     data.ccaAddress &&
     data.ccaAddress !== ZERO_ADDRESS &&
     data.currentState >= LaunchState.AUCTION_ACTIVE;
@@ -110,12 +110,12 @@ export function LaunchDetail({ address }: LaunchDetailProps) {
         onRefresh={data.refetch}
       />
 
-      {/* Prominent "View Token Sale" CTA */}
-      {showSaleCTA && (
-        <Link href={`/sales/${data.ccaAddress}`} className="block">
+      {/* Prominent "View Token Auction" CTA */}
+      {showAuctionCTA && (
+        <Link href={`/auctions/${data.ccaAddress}`} className="block">
           <div className="flex items-center justify-between rounded-lg bg-primary px-5 py-4 text-primary-foreground transition-opacity hover:opacity-90">
             <div>
-              <p className="text-lg font-semibold">Token Sale is Live</p>
+              <p className="text-lg font-semibold">Token Auction is Live</p>
               <p className="text-sm opacity-80">
                 View the auction, place bids, and track progress
               </p>

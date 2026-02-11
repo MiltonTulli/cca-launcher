@@ -1,17 +1,28 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { formatUnits } from "viem";
 import { useChainId } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { Globe, RefreshCw } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Globe, RefreshCw, Plus, ExternalLink, ArrowRight } from "lucide-react";
 import { useLaunches } from "@/hooks/useLaunches";
-import { LaunchCard } from "@/components/LaunchCard";
-import { EXPLORER_URLS } from "@/lib/utils";
+import { LAUNCH_STATE_LABELS, LAUNCH_STATE_COLORS } from "@/config/contracts";
+import { shortenAddress, getExplorerUrl } from "@/lib/utils";
 
 export function AllLaunches() {
-  const chainId = useChainId();
-  const explorerUrl = EXPLORER_URLS[chainId] || "https://etherscan.io";
   const { launches, isLoading, refetch } = useLaunches();
+  const router = useRouter();
+  const chainId = useChainId();
 
   if (isLoading) {
     return (
@@ -30,8 +41,14 @@ export function AllLaunches() {
         </div>
         <h2 className="mt-6 text-xl font-semibold">No launches yet</h2>
         <p className="mt-2 text-sm text-muted-foreground max-w-sm text-center">
-          No token launches have been created on this network yet.
+          No token launches have been created on this network yet. Be the first!
         </p>
+        <Link href="/launches/new" className="mt-6">
+          <Button>
+            <Plus className="h-4 w-4" />
+            Create Launch
+          </Button>
+        </Link>
       </div>
     );
   }
@@ -45,21 +62,103 @@ export function AllLaunches() {
             {launches.length} launch{launches.length !== 1 ? "es" : ""} on this network
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-4">
-        {[...launches].reverse().map((launch) => (
-          <LaunchCard
-            key={launch.orchestratorAddress}
-            launch={launch}
-            explorerUrl={explorerUrl}
-            showOperator
-          />
-        ))}
+      {/* CTA Banner */}
+      <Link href="/launches/new" className="block">
+        <div className="flex items-center justify-between rounded-lg border border-dashed border-primary/30 bg-primary/5 px-5 py-4 transition-colors hover:bg-primary/10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <Plus className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Create a new token launch</p>
+              <p className="text-xs text-muted-foreground">
+                Deploy your token with a fair auction and automated liquidity
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </div>
+      </Link>
+
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[60px]">ID</TableHead>
+              <TableHead>Token</TableHead>
+              <TableHead>Operator</TableHead>
+              <TableHead className="text-right">Token Amount</TableHead>
+              <TableHead className="text-center">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[...launches].reverse().map((launch) => (
+              <TableRow
+                key={launch.orchestratorAddress}
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => router.push(`/launches/${launch.orchestratorAddress}`)}
+              >
+                <TableCell className="font-mono text-xs text-muted-foreground">
+                  #{launch.launchId.toString()}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1.5">
+                    {launch.tokenSymbol && (
+                      <span className="text-xs font-medium text-foreground">
+                        {launch.tokenSymbol}
+                      </span>
+                    )}
+                    <a
+                      href={getExplorerUrl(chainId, "address", launch.token)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 font-mono text-xs text-primary hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {shortenAddress(launch.token)}
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <a
+                    href={getExplorerUrl(chainId, "address", launch.operator)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 font-mono text-xs text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {shortenAddress(launch.operator)}
+                    <ExternalLink className="h-3 w-3 shrink-0" />
+                  </a>
+                </TableCell>
+                <TableCell className="text-right font-mono text-xs">
+                  {formatUnits(launch.tokenAmount, launch.tokenDecimals ?? 18)}
+                  {launch.tokenSymbol && (
+                    <span className="text-muted-foreground ml-1">{launch.tokenSymbol}</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-center">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                      LAUNCH_STATE_COLORS[launch.state]
+                    }`}
+                  >
+                    {LAUNCH_STATE_LABELS[launch.state]}
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

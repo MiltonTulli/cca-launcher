@@ -2,11 +2,11 @@
 
 import { use } from "react";
 import { isAddress } from "viem";
-import { SaleDetail } from "@/components/sale-detail";
+import { AuctionDetail } from "@/components/auction-detail";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-export default function SaleDetailPage({
+export default function AuctionDetailPage({
   params,
 }: {
   params: Promise<{ address: string }>;
@@ -24,11 +24,11 @@ export default function SaleDetailPage({
           &quot;{address}&quot; is not a valid Ethereum address.
         </p>
         <Link
-          href="/sales"
+          href="/auctions"
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Sales
+          Back to Auctions
         </Link>
       </div>
     );
@@ -37,13 +37,13 @@ export default function SaleDetailPage({
   return (
     <>
       <Link
-        href="/sales"
+        href="/auctions"
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to All Sales
+        Back to All Auctions
       </Link>
-      <SaleDetail address={address as `0x${string}`} />
+      <AuctionDetail address={address as `0x${string}`} />
     </>
   );
 }

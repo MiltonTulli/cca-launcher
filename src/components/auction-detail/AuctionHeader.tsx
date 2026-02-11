@@ -6,7 +6,7 @@ import { RefreshCw } from "lucide-react";
 import { AddressLink } from "@/components/AddressLink";
 import { CCAPhase, CCA_PHASE_LABELS, CCA_PHASE_COLORS } from "@/config/contracts";
 
-interface SaleHeaderProps {
+interface AuctionHeaderProps {
   ccaAddress: Address;
   phase: CCAPhase;
   tokenSymbol: string | undefined;
@@ -14,13 +14,13 @@ interface SaleHeaderProps {
   onRefresh: () => void;
 }
 
-export function SaleHeader({
+export function AuctionHeader({
   ccaAddress,
   phase,
   tokenSymbol,
   chainId,
   onRefresh,
-}: SaleHeaderProps) {
+}: AuctionHeaderProps) {
   const initial = tokenSymbol ? tokenSymbol.charAt(0).toUpperCase() : "?";
 
   return (
@@ -34,7 +34,7 @@ export function SaleHeader({
         <div>
           <div className="flex items-center gap-3 mb-0.5">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {tokenSymbol ? `${tokenSymbol} Token Sale` : "Token Sale"}
+              {tokenSymbol ? `${tokenSymbol} Token Auction` : "Token Auction"}
             </h1>
             <span
               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${CCA_PHASE_COLORS[phase]}`}

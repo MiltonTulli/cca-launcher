@@ -6,25 +6,25 @@ import { Spinner } from "@/components/ui/spinner";
 import { XCircle, RefreshCw } from "lucide-react";
 import { useCCAData } from "@/hooks/useCCAData";
 
-import { SaleHeader } from "./SaleHeader";
+import { AuctionHeader } from "./AuctionHeader";
 import { KeyMetrics } from "./KeyMetrics";
 import { AllBidsTable } from "./AllBidsTable";
 import { ControlPanel } from "./ControlPanel";
-import { SaleInfoTabs } from "./SaleInfoTabs";
-import { SaleActionsPanel } from "./SaleActionsPanel";
+import { AuctionInfoTabs } from "./AuctionInfoTabs";
+import { AuctionActionsPanel } from "./AuctionActionsPanel";
 
-interface SaleDetailProps {
+interface AuctionDetailProps {
   address: Address;
 }
 
-export function SaleDetail({ address }: SaleDetailProps) {
+export function AuctionDetail({ address }: AuctionDetailProps) {
   const data = useCCAData(address);
 
   if (data.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <Spinner size="lg" />
-        <p className="mt-4 text-sm text-muted-foreground">Loading sale data...</p>
+        <p className="mt-4 text-sm text-muted-foreground">Loading auction data...</p>
       </div>
     );
   }
@@ -35,7 +35,7 @@ export function SaleDetail({ address }: SaleDetailProps) {
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-4">
           <XCircle className="h-8 w-8 text-red-600" />
         </div>
-        <h2 className="text-xl font-semibold mb-2">Failed to load sale</h2>
+        <h2 className="text-xl font-semibold mb-2">Failed to load auction</h2>
         <p className="text-sm text-muted-foreground mb-4 max-w-sm text-center">
           Could not read data from the CCA contract at this address. It may not be a valid
           CCA auction contract.
@@ -51,7 +51,7 @@ export function SaleDetail({ address }: SaleDetailProps) {
   return (
     <div className="space-y-6">
       {/* Header: token logo + name + phase */}
-      <SaleHeader
+      <AuctionHeader
         ccaAddress={address}
         phase={data.phase}
         tokenSymbol={data.tokenSymbol}
@@ -68,7 +68,7 @@ export function SaleDetail({ address }: SaleDetailProps) {
         <div className="lg:col-span-4 lg:order-last order-first space-y-4">
           <div className="lg:sticky lg:top-6 space-y-4">
             <ControlPanel data={data} ccaAddress={address} />
-            <SaleActionsPanel
+            <AuctionActionsPanel
               ccaAddress={address}
               phase={data.phase}
               onRefresh={data.refetch}
@@ -76,10 +76,10 @@ export function SaleDetail({ address }: SaleDetailProps) {
           </div>
         </div>
 
-        {/* Bids table + sale info tabs */}
+        {/* Bids table + auction info tabs */}
         <div className="lg:col-span-8 space-y-6">
           <AllBidsTable data={data} />
-          <SaleInfoTabs data={data} />
+          <AuctionInfoTabs data={data} />
         </div>
       </div>
     </div>

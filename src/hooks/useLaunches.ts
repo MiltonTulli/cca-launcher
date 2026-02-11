@@ -7,6 +7,7 @@ import {
   TALLY_LAUNCH_FACTORY_ABI,
   TALLY_LAUNCH_FACTORY_ADDRESSES,
   TALLY_LAUNCH_ORCHESTRATOR_ABI,
+  ERC20_ABI,
   LaunchState,
 } from "@/config/contracts";
 import { ZERO_ADDRESS } from "@/lib/utils";
@@ -18,6 +19,8 @@ export interface LaunchEntry {
   token: Address;
   launchId: bigint;
   tokenAmount: bigint;
+  tokenSymbol?: string;
+  tokenDecimals?: number;
 }
 
 /**
@@ -85,11 +88,11 @@ export function useLaunches() {
     query: { enabled: detailContracts.length > 0, staleTime: 30_000 },
   });
 
-  // Step 5: Parse results
-  const launches: LaunchEntry[] = useMemo(() => {
+  // Step 5: Parse results (without metadata)
+  const baseLaunches = useMemo(() => {
     if (launchAddresses.length === 0 || !detailResults) return [];
 
-    const result: LaunchEntry[] = [];
+    const result: Omit<LaunchEntry, "tokenSymbol" | "tokenDecimals">[] = [];
     for (let i = 0; i < launchAddresses.length; i++) {
       const base = i * FIELDS_PER_LAUNCH;
       const operator = detailResults[base]?.result as Address | undefined;
@@ -110,7 +113,55 @@ export function useLaunches() {
     return result;
   }, [launchAddresses, detailResults]);
 
-  const isLoading = isLoadingCount || isLoadingAddresses || isLoadingDetails;
+  // Step 6: Fetch token metadata (symbol + decimals) for each unique token
+  const META_FIELDS = 2;
+  const uniqueTokens = useMemo(() => {
+    const set = new Set<Address>();
+    for (const l of baseLaunches) {
+      if (l.token && l.token !== ZERO_ADDRESS && l.token !== ("0x0" as Address)) set.add(l.token);
+    }
+    return Array.from(set);
+  }, [baseLaunches]);
+
+  const metaContracts = useMemo(() => {
+    if (uniqueTokens.length === 0) return [];
+    return uniqueTokens.flatMap((addr) => [
+      { address: addr, abi: ERC20_ABI, functionName: "symbol" as const },
+      { address: addr, abi: ERC20_ABI, functionName: "decimals" as const },
+    ]);
+  }, [uniqueTokens]);
+
+  const { data: metaResults, isLoading: isLoadingMeta } = useReadContracts({
+    contracts: metaContracts,
+    query: { enabled: metaContracts.length > 0, staleTime: 60_000 },
+  });
+
+  const tokenMetaMap = useMemo(() => {
+    const map = new Map<Address, { symbol?: string; decimals?: number }>();
+    if (!metaResults) return map;
+    for (let i = 0; i < uniqueTokens.length; i++) {
+      const base = i * META_FIELDS;
+      map.set(uniqueTokens[i], {
+        symbol: metaResults[base]?.result as string | undefined,
+        decimals: metaResults[base + 1]?.result as number | undefined,
+      });
+    }
+    return map;
+  }, [uniqueTokens, metaResults]);
+
+  // Step 7: Merge metadata into launches
+  const launches: LaunchEntry[] = useMemo(() => {
+    return baseLaunches.map((l) => {
+      const meta = tokenMetaMap.get(l.token);
+      return {
+        ...l,
+        tokenSymbol: meta?.symbol,
+        tokenDecimals: meta?.decimals,
+      };
+    });
+  }, [baseLaunches, tokenMetaMap]);
+
+  const isLoading = isLoadingCount || isLoadingAddresses || isLoadingDetails || isLoadingMeta;
 
   return { launches, isLoading, refetch };
 }

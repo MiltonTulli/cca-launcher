@@ -101,9 +101,9 @@ export const LAUNCH_PRESETS: LaunchPreset[] = [
   {
     id: "test-case-1",
     name: "Test Case 1: Basic Launch",
-    description: "1M SALE tokens, 1 hour auction, 50/50 split, 0.3% fee tier",
+    description: "1M auction tokens, 1 hour auction, 50/50 split, 0.3% fee tier",
     values: {
-      token: SEPOLIA_CONTRACTS.SaleToken,
+      token: SEPOLIA_CONTRACTS.AuctionToken,
       paymentToken: SEPOLIA_CONTRACTS.TestUSDC,
       tokenSource: TokenSource.TRANSFER.toString(),
       tokenAmount: "1000000",
@@ -151,7 +151,7 @@ export const LAUNCH_PRESETS: LaunchPreset[] = [
     name: "Quick Test (Sepolia)",
     description: "Minimum duration, short lockup, pre-filled test tokens",
     values: {
-      token: SEPOLIA_CONTRACTS.SaleToken,
+      token: SEPOLIA_CONTRACTS.AuctionToken,
       paymentToken: SEPOLIA_CONTRACTS.TestUSDC,
       tokenSource: TokenSource.TRANSFER.toString(),
       tokenAmount: "10000",
@@ -259,8 +259,8 @@ export interface CCABidEntry {
   status: BidStatus;
 }
 
-/** Sale entry for the sales list page */
-export interface SaleEntry {
+/** Auction entry for the auctions list page */
+export interface AuctionEntry {
   ccaAddress: Address;
   orchestratorAddress: Address;
   token: Address;
@@ -273,4 +273,8 @@ export interface SaleEntry {
   totalRaised: bigint;
   isActive: boolean;
   hasEnded: boolean;
+  tokenSymbol?: string;
+  tokenDecimals?: number;
+  currencySymbol?: string;
+  currencyDecimals?: number;
 }
