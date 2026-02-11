@@ -1,9 +1,12 @@
 "use client";
 
 import { useChainId } from "wagmi";
-import { ExternalLink, Factory } from "lucide-react";
+import { ExternalLink, Factory, Github } from "lucide-react";
 import { TALLY_LAUNCH_FACTORY_ADDRESSES } from "@/config/contracts";
 import { ZERO_ADDRESS, shortenAddress, getExplorerUrl } from "@/lib/utils";
+
+const FACTORY_SOURCE_URL =
+  "https://github.com/withtally/orchestrator/blob/main/orchestrator/src/TallyLaunchFactory.sol";
 
 export function FactoryBanner() {
   const chainId = useChainId();
@@ -12,7 +15,7 @@ export function FactoryBanner() {
   if (!address || address === ZERO_ADDRESS) return null;
 
   return (
-    <div className="flex items-center gap-2.5 rounded-lg border bg-muted/50 px-4 py-2.5">
+    <div className="flex items-center gap-2.5 rounded-lg border bg-muted/50 px-4 py-2.5 flex-wrap">
       <Factory className="h-4 w-4 text-muted-foreground shrink-0" />
       <span className="text-xs text-muted-foreground">TallyLaunchFactory:</span>
       <a
@@ -23,6 +26,16 @@ export function FactoryBanner() {
       >
         {shortenAddress(address)}
         <ExternalLink className="h-3 w-3 shrink-0" />
+      </a>
+      <span className="text-border">|</span>
+      <a
+        href={FACTORY_SOURCE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <Github className="h-3.5 w-3.5 shrink-0" />
+        Source
       </a>
     </div>
   );
