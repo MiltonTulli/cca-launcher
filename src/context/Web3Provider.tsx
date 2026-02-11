@@ -53,7 +53,7 @@ export function Web3Provider({ children, cookies }: Web3ProviderProps) {
       initialState={initialState}
     >
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           {children}
         </ThemeProvider>
       </QueryClientProvider>
