@@ -378,14 +378,6 @@ export function LaunchForm({ initialValues, mode = "create", draftId, onDraftSav
                   hint="Permitter contract for validation rules"
                 />
                 <FormField
-                  label="Liquidity Manager"
-                  value={formValues.liquidityManager}
-                  onChange={(v) => updateField("liquidityManager", v)}
-                  placeholder="0x0000...0000 (none)"
-                  error={errors.liquidityManager}
-                  hint="Optional address to manage LP position (address(0) for none)"
-                />
-                <FormField
                   label="Tick Spacing"
                   value={formValues.tickSpacing}
                   onChange={(v) => updateField("tickSpacing", v)}

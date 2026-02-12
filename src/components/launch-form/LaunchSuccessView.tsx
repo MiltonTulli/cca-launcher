@@ -140,11 +140,6 @@ export function LaunchSuccessView({ result, chainId }: LaunchSuccessViewProps) {
               value={result.params.validationHook === "0x0000000000000000000000000000000000000000" ? "None" : result.params.validationHook}
               mono={result.params.validationHook !== "0x0000000000000000000000000000000000000000"}
             />
-            <SummaryRow
-              label="Liquidity Manager"
-              value={result.params.liquidityManager === "0x0000000000000000000000000000000000000000" ? "None" : result.params.liquidityManager}
-              mono={result.params.liquidityManager !== "0x0000000000000000000000000000000000000000"}
-            />
           </div>
         </div>
 

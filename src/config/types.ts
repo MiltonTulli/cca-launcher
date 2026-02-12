@@ -23,7 +23,6 @@ export interface LaunchParams {
   distributionDelay: bigint;
   positionBeneficiary: Address;
   validationHook: Address;
-  liquidityManager: Address;
 }
 
 // Form values type (user-friendly)
@@ -55,8 +54,6 @@ export interface LaunchFormValues {
   positionBeneficiary: string;
   // Validation
   validationHook: string;
-  // Liquidity management
-  liquidityManager: string;
 }
 
 // ============================================
@@ -84,7 +81,6 @@ export const DEFAULT_FORM_VALUES: LaunchFormValues = {
   distributionDelayDays: "0",
   positionBeneficiary: "",
   validationHook: "0x0000000000000000000000000000000000000000",
-  liquidityManager: "0x0000000000000000000000000000000000000000",
 };
 
 // ============================================
@@ -121,7 +117,6 @@ export const LAUNCH_PRESETS: LaunchPreset[] = [
       lockupDurationDays: "0",
       distributionDelayDays: "0",
       validationHook: "0x0000000000000000000000000000000000000000",
-      liquidityManager: "0x0000000000000000000000000000000000000000",
     },
   },
   {
@@ -143,7 +138,6 @@ export const LAUNCH_PRESETS: LaunchPreset[] = [
       lockupDurationDays: "180",
       distributionDelayDays: "1",
       validationHook: "0x0000000000000000000000000000000000000000",
-      liquidityManager: "0x0000000000000000000000000000000000000000",
     },
   },
   {
@@ -169,7 +163,6 @@ export const LAUNCH_PRESETS: LaunchPreset[] = [
       lockupDurationDays: "0",
       distributionDelayDays: "0",
       validationHook: "0x0000000000000000000000000000000000000000",
-      liquidityManager: "0x0000000000000000000000000000000000000000",
     },
   },
 ];
@@ -274,6 +267,7 @@ export interface AuctionEntry {
   isActive: boolean;
   hasEnded: boolean;
   tokenSymbol?: string;
+  tokenName?: string;
   tokenDecimals?: number;
   currencySymbol?: string;
   currencyDecimals?: number;

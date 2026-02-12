@@ -116,19 +116,25 @@ export function AllLaunches() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1.5">
-                    {launch.tokenSymbol && (
-                      <span className="text-xs font-medium text-foreground">
-                        {launch.tokenSymbol}
-                      </span>
-                    )}
+                    <div className="flex flex-col">
+                      {launch.tokenSymbol && (
+                        <span className="text-xs font-medium text-foreground">
+                          {launch.tokenSymbol}
+                        </span>
+                      )}
+                      {launch.tokenName && (
+                        <span className="text-[10px] text-muted-foreground leading-tight">
+                          {launch.tokenName}
+                        </span>
+                      )}
+                    </div>
                     <a
                       href={getExplorerUrl(chainId, "address", launch.token)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 font-mono text-xs text-primary hover:underline"
+                      className="flex items-center text-muted-foreground hover:text-primary"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {shortenAddress(launch.token)}
                       <ExternalLink className="h-3 w-3 shrink-0" />
                     </a>
                   </div>

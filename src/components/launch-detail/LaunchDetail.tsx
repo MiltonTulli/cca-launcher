@@ -151,7 +151,6 @@ export function LaunchDetail({ address, chainId }: LaunchDetailProps) {
                 isOperator={data.isOperator}
                 isPendingOperator={data.isPendingOperator}
                 pendingOp={data.pendingOp}
-                liquidityManagerValue={data.liquidityManagerValue}
                 onRefresh={data.refetch}
               />
             </SwitchChainGuard>

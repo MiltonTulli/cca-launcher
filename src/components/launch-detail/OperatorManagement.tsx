@@ -5,7 +5,7 @@ import { Address, isAddress } from "viem";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ArrowRightLeft } from "lucide-react";
-import { ZERO_ADDRESS, shortenAddress } from "@/lib/utils";
+import { ZERO_ADDRESS } from "@/lib/utils";
 import { ActionButton } from "./ActionButton";
 
 interface OperatorManagementProps {
@@ -13,7 +13,6 @@ interface OperatorManagementProps {
   isOperator: boolean;
   isPendingOperator: boolean;
   pendingOp: Address | undefined;
-  liquidityManagerValue: Address | undefined;
   onRefresh: () => void;
 }
 
@@ -22,11 +21,9 @@ export function OperatorManagement({
   isOperator,
   isPendingOperator,
   pendingOp,
-  liquidityManagerValue,
   onRefresh,
 }: OperatorManagementProps) {
   const [transferTo, setTransferTo] = useState("");
-  const [newLiquidityManager, setNewLiquidityManager] = useState("");
 
   if (!isOperator && !isPendingOperator) return null;
 
@@ -59,35 +56,6 @@ export function OperatorManagement({
                   variant="outline"
                   onSuccess={() => {
                     setTransferTo("");
-                    onRefresh();
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Update Liquidity Manager</label>
-              {liquidityManagerValue && liquidityManagerValue !== ZERO_ADDRESS && (
-                <p className="text-xs text-muted-foreground">
-                  Current: <span className="font-mono">{shortenAddress(liquidityManagerValue)}</span>
-                </p>
-              )}
-              <div className="flex gap-2">
-                <Input
-                  placeholder="New liquidity manager address (0x...)"
-                  value={newLiquidityManager}
-                  onChange={(e) => setNewLiquidityManager(e.target.value)}
-                  className="font-mono text-xs"
-                />
-                <ActionButton
-                  label="Update"
-                  functionName="updateLiquidityManager"
-                  contractAddress={address}
-                  args={[newLiquidityManager as Address]}
-                  disabled={!isAddress(newLiquidityManager)}
-                  variant="outline"
-                  onSuccess={() => {
-                    setNewLiquidityManager("");
                     onRefresh();
                   }}
                 />

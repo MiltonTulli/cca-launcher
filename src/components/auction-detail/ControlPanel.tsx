@@ -4,7 +4,7 @@ import { useState } from "react";
 import { formatUnits, parseUnits } from "viem";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { CheckCircle2, Clock, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 import { CCAPhase, BidStatus } from "@/config/contracts";
 import { q96PriceToDisplay, q96Decode, blocksToTimeEstimate } from "@/lib/q96";
 import { shortenAddress, ZERO_ADDRESS } from "@/lib/utils";
@@ -36,8 +36,11 @@ export function ControlPanel({ data, ccaAddress }: ControlPanelProps) {
     allBids,
     currentBlock,
     startBlock,
+    validationHook,
     refetch,
   } = data;
+
+  const hasValidationHook = !!validationHook && validationHook !== ZERO_ADDRESS;
 
   const isNativeCurrency = !currencyAddress || currencyAddress === ZERO_ADDRESS;
   const tDec = tokenDecimals ?? 18;
@@ -133,6 +136,24 @@ export function ControlPanel({ data, ccaAddress }: ControlPanelProps) {
   // LIVE phase — full bid form
   return (
     <PanelShell>
+      {hasValidationHook && (
+        <div className="p-4 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                This auction has a validation hook
+              </p>
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
+                Bidding requires authorization from the hook contract. Bids without valid hook data will be rejected.
+              </p>
+              <p className="text-[10px] text-amber-500 dark:text-amber-500 mt-1 font-mono">
+                {shortenAddress(validationHook)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <BidFormContent
         data={data}
         ccaAddress={ccaAddress}

@@ -128,10 +128,6 @@ export function useLaunchForm({
     if (formValues.validationHook && formValues.validationHook !== "0x0000000000000000000000000000000000000000" && !isAddress(formValues.validationHook)) {
       newErrors.validationHook = "Invalid hook address";
     }
-    if (formValues.liquidityManager && formValues.liquidityManager !== "0x0000000000000000000000000000000000000000" && !isAddress(formValues.liquidityManager)) {
-      newErrors.liquidityManager = "Invalid liquidity manager address";
-    }
-
     // Token amount
     if (!formValues.tokenAmount || parseFloat(formValues.tokenAmount) <= 0) {
       newErrors.tokenAmount = "Token amount must be greater than 0";
@@ -227,7 +223,6 @@ export function useLaunchForm({
       distributionDelay: BigInt(parseInt(formValues.distributionDelayDays || "0") * 86400),
       positionBeneficiary: formValues.positionBeneficiary as Address,
       validationHook: (formValues.validationHook || "0x0000000000000000000000000000000000000000") as Address,
-      liquidityManager: (formValues.liquidityManager || "0x0000000000000000000000000000000000000000") as Address,
     };
 
     writeContract({
@@ -294,7 +289,7 @@ export function useLaunchForm({
           if (decoded.eventName === "LaunchCreated") {
             const args = decoded.args as {
               launchId: bigint;
-              launcherAddress: Address;
+              launcher: Address;
               token: Address;
               paymentToken: Address;
               operator: Address;
@@ -304,7 +299,7 @@ export function useLaunchForm({
               platformFeeOnLPFees: bigint;
             };
             launchId = args.launchId;
-            launcherAddress = args.launcherAddress;
+            launcherAddress = args.launcher;
             break;
           }
         } catch {

@@ -38,7 +38,6 @@ export interface UseLaunchDataReturn {
   auctionEndTimeValue: bigint | undefined;
   distributionDelayValue: bigint | undefined;
   distributionTimestampValue: bigint | undefined;
-  liquidityManagerValue: Address | undefined;
 
   // Derived
   isOperator: boolean;
@@ -92,7 +91,6 @@ export function useLaunchData(address: Address, overrideChainId?: number): UseLa
       { ...contractBase, functionName: "auctionEndTime" },              // [9]
       { ...contractBase, functionName: "distributionDelay" },           // [10]
       { ...contractBase, functionName: "distributionTimestamp" },        // [11]
-      { ...contractBase, functionName: "liquidityManager" },            // [12]
     ],
     query: {
       refetchInterval: 15000,
@@ -116,7 +114,6 @@ export function useLaunchData(address: Address, overrideChainId?: number): UseLa
   const auctionEndTimeValue = results?.[9]?.result as bigint | undefined;
   const distributionDelayValue = results?.[10]?.result as bigint | undefined;
   const distributionTimestampValue = results?.[11]?.result as bigint | undefined;
-  const liquidityManagerValue = results?.[12]?.result as Address | undefined;
 
   // Derived values
   const currentState = (directState ?? launchInfo?.state ?? 0) as LaunchState;
@@ -244,8 +241,6 @@ export function useLaunchData(address: Address, overrideChainId?: number): UseLa
     auctionEndTimeValue,
     distributionDelayValue,
     distributionTimestampValue,
-    liquidityManagerValue,
-
     isOperator,
     isPendingOperator,
     auctionTimeElapsed,

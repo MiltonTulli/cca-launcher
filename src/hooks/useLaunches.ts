@@ -7,7 +7,7 @@ import {
   TALLY_LAUNCH_FACTORY_ABI,
   TALLY_LAUNCH_FACTORY_ADDRESSES,
   TALLY_LAUNCH_ORCHESTRATOR_ABI,
-  ERC20_ABI,
+  ERC20_EXTENDED_ABI,
   LaunchState,
 } from "@/config/contracts";
 import { ZERO_ADDRESS } from "@/lib/utils";
@@ -21,6 +21,7 @@ export interface LaunchEntry {
   launchId: bigint;
   tokenAmount: bigint;
   tokenSymbol?: string;
+  tokenName?: string;
   tokenDecimals?: number;
 }
 
@@ -116,8 +117,8 @@ export function useLaunches(overrideChainId?: number) {
     return result;
   }, [launchAddresses, detailResults]);
 
-  // Step 6: Fetch token metadata (symbol + decimals) for each unique token
-  const META_FIELDS = 2;
+  // Step 6: Fetch token metadata (symbol + name + decimals) for each unique token
+  const META_FIELDS = 3;
   const uniqueTokens = useMemo(() => {
     const set = new Set<Address>();
     for (const l of baseLaunches) {
@@ -129,8 +130,9 @@ export function useLaunches(overrideChainId?: number) {
   const metaContracts = useMemo(() => {
     if (uniqueTokens.length === 0) return [];
     return uniqueTokens.flatMap((addr) => [
-      { address: addr, abi: ERC20_ABI, functionName: "symbol" as const, chainId },
-      { address: addr, abi: ERC20_ABI, functionName: "decimals" as const, chainId },
+      { address: addr, abi: ERC20_EXTENDED_ABI, functionName: "symbol" as const, chainId },
+      { address: addr, abi: ERC20_EXTENDED_ABI, functionName: "name" as const, chainId },
+      { address: addr, abi: ERC20_EXTENDED_ABI, functionName: "decimals" as const, chainId },
     ]);
   }, [uniqueTokens, chainId]);
 
@@ -140,13 +142,14 @@ export function useLaunches(overrideChainId?: number) {
   });
 
   const tokenMetaMap = useMemo(() => {
-    const map = new Map<Address, { symbol?: string; decimals?: number }>();
+    const map = new Map<Address, { symbol?: string; name?: string; decimals?: number }>();
     if (!metaResults) return map;
     for (let i = 0; i < uniqueTokens.length; i++) {
       const base = i * META_FIELDS;
       map.set(uniqueTokens[i], {
         symbol: metaResults[base]?.result as string | undefined,
-        decimals: metaResults[base + 1]?.result as number | undefined,
+        name: metaResults[base + 1]?.result as string | undefined,
+        decimals: metaResults[base + 2]?.result as number | undefined,
       });
     }
     return map;
@@ -159,6 +162,7 @@ export function useLaunches(overrideChainId?: number) {
       return {
         ...l,
         tokenSymbol: meta?.symbol,
+        tokenName: meta?.name,
         tokenDecimals: meta?.decimals,
       };
     });
