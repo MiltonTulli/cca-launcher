@@ -33,6 +33,7 @@ export interface UseLaunchPreconditionsInput {
   auctionInfo: AuctionInfo | undefined;
   distInfo: DistributionInfo | undefined;
   ccaCurrencyRaised: bigint | undefined;
+  pendingTreasuryPaymentValue: bigint | undefined;
   now: number;
 }
 
@@ -57,6 +58,7 @@ export function useLaunchPreconditions(
     auctionInfo,
     distInfo,
     ccaCurrencyRaised,
+    pendingTreasuryPaymentValue,
     now,
   } = input;
 
@@ -91,8 +93,7 @@ export function useLaunchPreconditions(
           ),
           loading: tokenLoading,
         });
-      } else if (tokenSourceValue === TokenSource.PERMIT2) {
-        // PERMIT2 / TRANSFER_FROM
+      } else if (tokenSourceValue === TokenSource.TRANSFER_FROM) {
         checks.push({
           id: "token-allowance",
           label: "Operator has approved tokens",
@@ -180,7 +181,7 @@ export function useLaunchPreconditions(
           met: hasMinterRole === true,
           loading: hasMinterRole === undefined && tokenLoading,
         });
-      } else if (tokenSourceValue === TokenSource.PERMIT2) {
+      } else if (tokenSourceValue === TokenSource.TRANSFER_FROM) {
         // TRANSFER_FROM: needs both allowance and balance from operator
         checks.push({
           id: "token-allowance",
@@ -342,6 +343,39 @@ export function useLaunchPreconditions(
       map["finalizeFailedAuction"] = failedChecks;
     }
 
+    // --- claimTreasuryPayment ---
+    if (
+      (currentState === LaunchState.DISTRIBUTED ||
+        currentState === LaunchState.LOCKED ||
+        currentState === LaunchState.UNLOCKED) &&
+      connectedAddress
+    ) {
+      const hasPending =
+        pendingTreasuryPaymentValue !== undefined && pendingTreasuryPaymentValue > BigInt(0);
+
+      map["claimTreasuryPayment"] = [
+        {
+          id: "is-operator",
+          label: "Connected as operator",
+          description: launchInfo?.operator
+            ? `Operator: ${shortenAddress(launchInfo.operator)}`
+            : "",
+          met: isOperator,
+        },
+        {
+          id: "has-pending-payment",
+          label: "Escrowed treasury payment exists",
+          description:
+            pendingTreasuryPaymentValue !== undefined
+              ? hasPending
+                ? `Pending: ${formatUnits(pendingTreasuryPaymentValue, 18)}`
+                : "No escrowed payment"
+              : "Loading...",
+          met: hasPending,
+        },
+      ];
+    }
+
     // --- withdrawPosition ---
     if (currentState === LaunchState.LOCKED && connectedAddress) {
       const distTs = distributionTimestampValue ? Number(distributionTimestampValue) : 0;
@@ -388,6 +422,7 @@ export function useLaunchPreconditions(
     auctionInfo,
     distInfo,
     ccaCurrencyRaised,
+    pendingTreasuryPaymentValue,
     now,
   ]);
 }

@@ -191,6 +191,29 @@ export function ActionsPanel({
           />
         </div>
       );
+
+      // Claim escrowed treasury payment (only when pending payment exists)
+      if (preconditionsByAction["claimTreasuryPayment"]) {
+        const hasPending = preconditionsByAction["claimTreasuryPayment"].find(
+          (c) => c.id === "has-pending-payment"
+        )?.met;
+        if (hasPending) {
+          sections.push(
+            <div key="claim-treasury" className="space-y-2">
+              <PreconditionChecklist
+                checks={preconditionsByAction["claimTreasuryPayment"]}
+                action="Claim Treasury Payment"
+              />
+              <ActionButton
+                label="Claim Treasury Payment"
+                functionName="claimTreasuryPayment"
+                contractAddress={address}
+                onSuccess={onRefresh}
+              />
+            </div>
+          );
+        }
+      }
     }
     if (currentState === LaunchState.LOCKED && connectedAddress) {
       sections.push(

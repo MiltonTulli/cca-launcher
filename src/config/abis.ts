@@ -381,6 +381,13 @@ export const TALLY_LAUNCH_ORCHESTRATOR_ABI = [
     outputs: [{ name: "", type: "address", internalType: "address" }],
     stateMutability: "view",
   },
+  {
+    type: "function",
+    name: "pendingTreasuryPayment",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+    stateMutability: "view",
+  },
   // --- State-changing functions ---
   {
     type: "function",
@@ -441,6 +448,13 @@ export const TALLY_LAUNCH_ORCHESTRATOR_ABI = [
   {
     type: "function",
     name: "withdrawPosition",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "claimTreasuryPayment",
     inputs: [],
     outputs: [],
     stateMutability: "nonpayable",

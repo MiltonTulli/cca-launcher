@@ -3,13 +3,13 @@
 // ============================================
 export enum TokenSource {
   MINT = 0,
-  PERMIT2 = 1,
+  TRANSFER_FROM = 1,
   TRANSFER = 2,
 }
 
 export const TOKEN_SOURCE_OPTIONS = [
   { value: TokenSource.MINT, label: "Mint", description: "Factory mints tokens" },
-  { value: TokenSource.PERMIT2, label: "Permit2", description: "Transfer via Permit2 approval" },
+  { value: TokenSource.TRANSFER_FROM, label: "Transfer From", description: "Pull via transferFrom (requires approval)" },
   { value: TokenSource.TRANSFER, label: "Transfer", description: "Direct transfer to orchestrator" },
 ] as const;
 

@@ -62,6 +62,7 @@ export function LaunchDetail({ address, chainId }: LaunchDetailProps) {
     auctionInfo: data.auctionInfo,
     distInfo: data.distInfo,
     ccaCurrencyRaised: data.ccaCurrencyRaised,
+    pendingTreasuryPaymentValue: data.pendingTreasuryPaymentValue,
     now,
   });
 
