@@ -38,6 +38,7 @@ export const TALLY_LAUNCH_FACTORY_ADDRESSES: Record<number, Address> = {
   1: "0x0000000000000000000000000000000000000000", // Mainnet - TBD
   11155111: SEPOLIA_CONTRACTS.TallyLaunchFactory, // Sepolia
   42161: "0x0000000000000000000000000000000000000000", // Arbitrum - TBD
+  421614: "0x0000000000000000000000000000000000000000", // Arbitrum Sepolia - TBD
 };
 
 // ============================================

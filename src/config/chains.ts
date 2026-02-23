@@ -20,4 +20,9 @@ export const CHAIN_METADATA: Record<number, ChainMeta> = {
     shortName: "ARB",
     explorerUrl: "https://arbiscan.io",
   },
+  421614: {
+    name: "Arbitrum Sepolia",
+    shortName: "ARB-SEP",
+    explorerUrl: "https://sepolia.arbiscan.io",
+  },
 };
