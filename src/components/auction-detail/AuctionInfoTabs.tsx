@@ -91,6 +91,7 @@ export function AuctionInfoTabs({ data }: AuctionInfoTabsProps) {
     tokenSymbol,
     currencySymbol,
     explorerUrl,
+    chainId,
   } = data;
 
   const tDec = tokenDecimals ?? 18;
@@ -201,7 +202,7 @@ export function AuctionInfoTabs({ data }: AuctionInfoTabsProps) {
                 {startBlock !== undefined && endBlock !== undefined && (
                   <InfoRow
                     label="Auction Duration"
-                    value={`${(Number(endBlock) - Number(startBlock)).toLocaleString()} blocks (~${blocksToTimeEstimate(Number(endBlock) - Number(startBlock))})`}
+                    value={`${(Number(endBlock) - Number(startBlock)).toLocaleString()} blocks (~${blocksToTimeEstimate(Number(endBlock) - Number(startBlock), chainId)})`}
                   />
                 )}
               </div>

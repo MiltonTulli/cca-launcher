@@ -38,6 +38,7 @@ export function ControlPanel({ data, ccaAddress }: ControlPanelProps) {
     startBlock,
     validationHook,
     refetch,
+    chainId,
   } = data;
 
   const hasValidationHook = !!validationHook && validationHook !== ZERO_ADDRESS;
@@ -73,7 +74,7 @@ export function ControlPanel({ data, ccaAddress }: ControlPanelProps) {
           <h3 className="text-lg font-semibold mb-1">Auction Starting Soon</h3>
           <p className="text-sm text-muted-foreground">
             {blocksUntilStart > 0
-              ? `Starts in ~${blocksToTimeEstimate(blocksUntilStart)} (${blocksUntilStart.toLocaleString()} blocks)`
+              ? `Starts in ~${blocksToTimeEstimate(blocksUntilStart, chainId)} (${blocksUntilStart.toLocaleString()} blocks)`
               : "Waiting for start block..."}
           </p>
         </div>

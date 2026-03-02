@@ -15,6 +15,7 @@ export const EXPLORER_URLS: Record<number, string> = {
   1: "https://etherscan.io",
   11155111: "https://sepolia.etherscan.io",
   42161: "https://arbiscan.io",
+  421614: "https://sepolia.arbiscan.io",
 };
 
 export const BASIS_POINTS = BigInt(10_000);

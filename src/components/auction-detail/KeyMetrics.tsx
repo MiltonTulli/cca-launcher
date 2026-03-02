@@ -23,6 +23,7 @@ export function KeyMetrics({ data }: KeyMetricsProps) {
     currencyDecimals,
     tokenSymbol,
     currencySymbol,
+    chainId,
   } = data;
 
   const tDec = tokenDecimals ?? 18;
@@ -59,7 +60,7 @@ export function KeyMetrics({ data }: KeyMetricsProps) {
             </div>
             <span>
               {blocksRemaining > 0
-                ? `${blocksRemaining.toLocaleString()} blocks remaining (${blocksToTimeEstimate(blocksRemaining)})`
+                ? `${blocksRemaining.toLocaleString()} blocks remaining (${blocksToTimeEstimate(blocksRemaining, chainId)})`
                 : "Ended"}
             </span>
           </div>

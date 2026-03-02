@@ -32,6 +32,18 @@ export const LAUNCH_CONSTRAINTS = {
 } as const;
 
 // ============================================
+// BLOCK TIME PER CHAIN (seconds)
+// ============================================
+export const BLOCK_TIME_SECONDS: Record<number, number> = {
+  1: 12,         // Ethereum mainnet ~12s
+  11155111: 12,  // Sepolia testnet ~12s
+  42161: 0.25,   // Arbitrum One ~250ms
+  421614: 0.25,  // Arbitrum Sepolia ~250ms
+};
+
+export const DEFAULT_BLOCK_TIME = 12;
+
+// ============================================
 // Q96 FIXED-POINT CONSTANT (2^96)
 // ============================================
 export const Q96 = BigInt("79228162514264337593543950336"); // 2^96

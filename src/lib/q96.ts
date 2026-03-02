@@ -1,5 +1,5 @@
 import { CCAPhase } from "@/config/enums";
-import { Q96 } from "@/config/constants";
+import { Q96, BLOCK_TIME_SECONDS, DEFAULT_BLOCK_TIME } from "@/config/constants";
 
 const ZERO = BigInt(0);
 const DISPLAY_PRECISION = BigInt("1000000000000000000"); // 1e18
@@ -104,11 +104,12 @@ export function getCCAPhase(
 
 /**
  * Estimate time remaining in human-readable format from block count.
- * Uses ~12 seconds per block heuristic.
+ * Uses chain-specific block times (e.g. ~12s for Ethereum, ~0.25s for Arbitrum).
  */
-export function blocksToTimeEstimate(blocks: number): string {
+export function blocksToTimeEstimate(blocks: number, chainId?: number): string {
   if (blocks <= 0) return "0s";
-  const seconds = blocks * 12;
+  const blockTime = chainId ? (BLOCK_TIME_SECONDS[chainId] ?? DEFAULT_BLOCK_TIME) : DEFAULT_BLOCK_TIME;
+  const seconds = Math.round(blocks * blockTime);
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   if (h > 0) return `~${h}h ${m}m`;
