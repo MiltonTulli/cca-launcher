@@ -4,9 +4,9 @@ import { useState } from "react";
 import { formatUnits, parseUnits } from "viem";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { AlertTriangle, CheckCircle2, Clock, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle2, TrendingUp } from "lucide-react";
 import { CCAPhase, BidStatus } from "@/config/contracts";
-import { q96PriceToDisplay, q96Decode, blocksToTimeEstimate } from "@/lib/q96";
+import { q96PriceToDisplay, q96Decode } from "@/lib/q96";
 import { shortenAddress, ZERO_ADDRESS } from "@/lib/utils";
 import { useBidActions } from "@/hooks/useBidActions";
 import { BidStatusBadge } from "./BidStatusBadge";
@@ -34,11 +34,8 @@ export function ControlPanel({ data, ccaAddress }: ControlPanelProps) {
     userErc20AllowanceForPermit2,
     userPermit2AllowanceForCCA,
     allBids,
-    currentBlock,
-    startBlock,
     validationHook,
     refetch,
-    chainId,
   } = data;
 
   const hasValidationHook = !!validationHook && validationHook !== ZERO_ADDRESS;
@@ -59,28 +56,7 @@ export function ControlPanel({ data, ccaAddress }: ControlPanelProps) {
     onSuccess: refetch,
   });
 
-  // Coming soon
-  if (phase === CCAPhase.COMING_SOON) {
-    const blocksUntilStart =
-      startBlock && currentBlock
-        ? Number(startBlock - currentBlock)
-        : 0;
-    return (
-      <PanelShell>
-        <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
-            <Clock className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-semibold mb-1">Auction Starting Soon</h3>
-          <p className="text-sm text-muted-foreground">
-            {blocksUntilStart > 0
-              ? `Starts in ~${blocksToTimeEstimate(blocksUntilStart, chainId)} (${blocksUntilStart.toLocaleString()} blocks)`
-              : "Waiting for start block..."}
-          </p>
-        </div>
-      </PanelShell>
-    );
-  }
+  // Coming soon — skip block validation, always allow bidding
 
   // Ended / Failed
   if (phase === CCAPhase.ENDED || phase === CCAPhase.FAILED) {
