@@ -119,14 +119,17 @@ export function useCCAData(ccaAddress: Address, overrideChainId?: number): UseCC
   const isGraduated = primaryResults?.[14]?.result as boolean | undefined;
   const nextBidId = primaryResults?.[15]?.result as bigint | undefined;
 
-  // Derive phase
-  const phase = getCCAPhase(
-    currentBlock,
-    startBlock ?? BigInt(0),
-    endBlock ?? BigInt(0),
-    claimBlock ?? BigInt(0),
-    isGraduated ?? false,
-  );
+  // Derive phase — only when both block number and contract data are available.
+  // Without this guard, on Arbitrum the block number (e.g. 300M) arrives before
+  // startBlock/endBlock/claimBlock, causing getCCAPhase(300M, 0, 0, 0) → FAILED.
+  const phase = (
+    currentBlockData !== undefined &&
+    startBlock !== undefined &&
+    endBlock !== undefined &&
+    claimBlock !== undefined
+  )
+    ? getCCAPhase(currentBlock, startBlock, endBlock, claimBlock, isGraduated ?? false)
+    : CCAPhase.COMING_SOON;
 
   // ============================================
   // Secondary Multicall: Token metadata
@@ -259,7 +262,7 @@ export function useCCAData(ccaAddress: Address, overrideChainId?: number): UseCC
     return entries;
   }, [bidResults, connectedAddress, phase]);
 
-  const isLoading = isPrimaryLoading || isMetadataLoading;
+  const isLoading = isPrimaryLoading || isMetadataLoading || currentBlockData === undefined;
 
   return {
     isLoading,

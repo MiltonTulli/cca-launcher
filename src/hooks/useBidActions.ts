@@ -5,6 +5,7 @@ import { Address, parseUnits, maxUint256 } from "viem";
 import {
   useAccount,
   useChainId,
+  usePublicClient,
   useWriteContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
@@ -46,7 +47,9 @@ export function useBidActions({
 }: UseBidActionsOptions) {
   const { address: owner } = useAccount();
   const chainId = useChainId();
+  const publicClient = usePublicClient({ chainId });
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [simulationError, setSimulationError] = useState<Error | null>(null);
 
   const needsPermit =
     !!permitterAddress && permitterAddress !== ZERO_ADDRESS;
@@ -55,9 +58,15 @@ export function useBidActions({
     writeContract,
     data: txHash,
     isPending,
-    error,
-    reset,
+    error: writeError,
+    reset: writeReset,
   } = useWriteContract();
+
+  const error = simulationError || writeError;
+  const reset = useCallback(() => {
+    setSimulationError(null);
+    writeReset();
+  }, [writeReset]);
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash: txHash,
@@ -124,6 +133,7 @@ export function useBidActions({
       if (maxPriceQ96 === BigInt(0)) return;
 
       setPendingAction("submitBid");
+      setSimulationError(null);
 
       let hookData: Hex = "0x";
       if (needsPermit) {
@@ -149,6 +159,34 @@ export function useBidActions({
         }
       }
 
+      // Simulate first to catch reverts with a clear error instead of
+      // sending a doomed tx to the wallet (which shows absurd gas estimates).
+      if (publicClient) {
+        try {
+          await publicClient.simulateContract({
+            address: ccaAddress,
+            abi: CCA_AUCTION_ABI,
+            functionName: "submitBid",
+            args: [maxPriceQ96, amountUnits, owner, hookData],
+            ...(isNativeCurrency ? { value: amountUnits } : {}),
+            account: owner,
+          });
+        } catch (simError: unknown) {
+          setPendingAction(null);
+          console.error("[submitBid] Simulation reverted:", simError);
+          // Extract the contract error name from viem's ContractFunctionRevertedError
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const err = simError as any;
+          const contractErrorName = err?.cause?.data?.errorName;
+          const shortMsg = err?.shortMessage;
+          const msg = contractErrorName
+            ? `Contract error: ${contractErrorName}`
+            : shortMsg || (simError instanceof Error ? simError.message : String(simError));
+          setSimulationError(new Error(msg));
+          return;
+        }
+      }
+
       writeContract({
         address: ccaAddress,
         abi: CCA_AUCTION_ABI,
@@ -157,7 +195,7 @@ export function useBidActions({
         ...(isNativeCurrency ? { value: amountUnits } : {}),
       });
     },
-    [owner, currencyDecimals, tokenDecimals, tickSpacing, maxBidPrice, isNativeCurrency, ccaAddress, writeContract, needsPermit, permitterAddress, chainId],
+    [owner, currencyDecimals, tokenDecimals, tickSpacing, maxBidPrice, isNativeCurrency, ccaAddress, writeContract, needsPermit, permitterAddress, chainId, publicClient],
   );
 
   const exitBid = useCallback(
