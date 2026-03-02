@@ -4,9 +4,9 @@ import { useState } from "react";
 import { formatUnits, parseUnits } from "viem";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { AlertTriangle, CheckCircle2, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 import { CCAPhase, BidStatus } from "@/config/contracts";
-import { q96PriceToDisplay, q96Decode } from "@/lib/q96";
+import { q96PriceToDisplay, q96Decode, blocksToTimeEstimate } from "@/lib/q96";
 import { shortenAddress, ZERO_ADDRESS } from "@/lib/utils";
 import { useBidActions } from "@/hooks/useBidActions";
 import { BidStatusBadge } from "./BidStatusBadge";
@@ -34,8 +34,11 @@ export function ControlPanel({ data, ccaAddress }: ControlPanelProps) {
     userErc20AllowanceForPermit2,
     userPermit2AllowanceForCCA,
     allBids,
+    currentBlock,
+    startBlock,
     validationHook,
     refetch,
+    chainId,
   } = data;
 
   const hasValidationHook = !!validationHook && validationHook !== ZERO_ADDRESS;
@@ -56,7 +59,83 @@ export function ControlPanel({ data, ccaAddress }: ControlPanelProps) {
     onSuccess: refetch,
   });
 
-  // Hotfix: always show bid form regardless of phase
+  // Coming soon
+  if (phase === CCAPhase.COMING_SOON) {
+    const blocksUntilStart =
+      startBlock && currentBlock
+        ? Number(startBlock - currentBlock)
+        : 0;
+    return (
+      <PanelShell>
+        <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
+            <Clock className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-1">Auction Starting Soon</h3>
+          <p className="text-sm text-muted-foreground">
+            {blocksUntilStart > 0
+              ? `Starts in ~${blocksToTimeEstimate(blocksUntilStart, chainId)} (${blocksUntilStart.toLocaleString()} blocks)`
+              : "Waiting for start block..."}
+          </p>
+        </div>
+      </PanelShell>
+    );
+  }
+
+  // Ended / Failed
+  if (phase === CCAPhase.ENDED || phase === CCAPhase.FAILED) {
+    return (
+      <PanelShell>
+        <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+          <h3 className="text-lg font-semibold mb-1">Auction Ended</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            {phase === CCAPhase.FAILED
+              ? "Auction did not meet graduation requirements."
+              : "Waiting for graduation..."}
+          </p>
+        </div>
+        <UserBidsSection
+          userBids={userBids}
+          phase={phase}
+          tDec={tDec}
+          cDec={cDec}
+          tokenSymbol={tokenSymbol}
+          currencySymbol={currencySymbol}
+          maxBidPrice={maxBidPrice}
+          actions={actions}
+        />
+      </PanelShell>
+    );
+  }
+
+  // Claimable
+  if (phase === CCAPhase.CLAIMABLE) {
+    const hasActiveBids = userBids.some((b) => b.status === BidStatus.ACTIVE);
+    return (
+      <PanelShell>
+        <div className="p-4 border-b border-border">
+          <h3 className="text-lg font-semibold">Claim Tokens</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            {hasActiveBids
+              ? "Exit your bids first to settle them, then claim your tokens."
+              : "The auction has graduated. Claim your tokens below."}
+          </p>
+        </div>
+        <UserBidsSection
+          userBids={userBids}
+          phase={phase}
+          tDec={tDec}
+          cDec={cDec}
+          tokenSymbol={tokenSymbol}
+          currencySymbol={currencySymbol}
+          maxBidPrice={maxBidPrice}
+          actions={actions}
+        />
+      </PanelShell>
+    );
+  }
+
+  // LIVE phase — full bid form
   return (
     <PanelShell>
       {hasValidationHook && (
@@ -564,8 +643,8 @@ function UserBidsSection({
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {/* ACTIVE bids: always allow exit */}
-                  {status === BidStatus.ACTIVE && (
+                  {/* ACTIVE bids: Exit during LIVE, or Exit after auction ends (required before claiming) */}
+                  {status === BidStatus.ACTIVE && (phase === CCAPhase.LIVE || phase >= CCAPhase.ENDED) && (
                     <Button
                       variant="ghost"
                       size="sm"
