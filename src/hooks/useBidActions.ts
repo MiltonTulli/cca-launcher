@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Address, parseUnits, maxUint256 } from "viem";
+import { Address, parseUnits, maxUint256, encodeFunctionData } from "viem";
 import {
   useAccount,
   useChainId,
@@ -17,6 +17,10 @@ import {
 } from "@/config/contracts";
 import { ZERO_ADDRESS } from "@/lib/utils";
 import { alignPriceToTick, decimalToTickAlignedQ96 } from "@/lib/q96";
+import {
+  simulateTransaction,
+  type SimulationResult,
+} from "@/lib/simulate";
 import type { Hex } from "viem";
 
 // Max uint160 for Permit2 approval amount
@@ -50,6 +54,8 @@ export function useBidActions({
   const publicClient = usePublicClient({ chainId });
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [simulationError, setSimulationError] = useState<Error | null>(null);
+  const [tenderlyResult, setTenderlyResult] = useState<SimulationResult | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
 
   const needsPermit =
     !!permitterAddress && permitterAddress !== ZERO_ADDRESS;
@@ -65,6 +71,7 @@ export function useBidActions({
   const error = simulationError || writeError;
   const reset = useCallback(() => {
     setSimulationError(null);
+    setTenderlyResult(null);
     writeReset();
   }, [writeReset]);
 
@@ -174,7 +181,6 @@ export function useBidActions({
         } catch (simError: unknown) {
           setPendingAction(null);
           console.error("[submitBid] Simulation reverted:", simError);
-          // Extract the contract error name from viem's ContractFunctionRevertedError
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const err = simError as any;
           const contractErrorName = err?.cause?.data?.errorName;
@@ -196,6 +202,86 @@ export function useBidActions({
       });
     },
     [owner, currencyDecimals, tokenDecimals, tickSpacing, maxBidPrice, isNativeCurrency, ccaAddress, writeContract, needsPermit, permitterAddress, chainId, publicClient],
+  );
+
+  /** Simulate a bid on Tenderly without sending a transaction. */
+  const simulateBid = useCallback(
+    async (amount: string, maxPriceInput: string, isMarketOrder: boolean) => {
+      if (!owner) return;
+      const cDec = currencyDecimals ?? 18;
+      const tDec = tokenDecimals ?? 18;
+      const amountUnits = parseUnits(amount, cDec);
+      const ts = tickSpacing ?? BigInt(1);
+
+      let maxPriceQ96: bigint;
+      if (isMarketOrder && maxBidPrice) {
+        maxPriceQ96 = alignPriceToTick(maxBidPrice, ts);
+      } else {
+        maxPriceQ96 = decimalToTickAlignedQ96(maxPriceInput, ts, tDec, cDec);
+      }
+
+      if (maxPriceQ96 === BigInt(0)) return;
+
+      setIsSimulating(true);
+      setTenderlyResult(null);
+      setSimulationError(null);
+
+      let hookData: Hex = "0x";
+      if (needsPermit) {
+        try {
+          const res = await fetch("/api/permit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              bidder: owner,
+              permitterAddress,
+              chainId,
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || "Failed to fetch permit");
+          }
+          const data = await res.json();
+          hookData = data.hookData as Hex;
+        } catch (e) {
+          setIsSimulating(false);
+          setSimulationError(e instanceof Error ? e : new Error(String(e)));
+          return;
+        }
+      }
+
+      try {
+        const input = encodeFunctionData({
+          abi: CCA_AUCTION_ABI,
+          functionName: "submitBid",
+          args: [maxPriceQ96, amountUnits, owner, hookData],
+        });
+
+        const result = await simulateTransaction({
+          from: owner,
+          to: ccaAddress,
+          input,
+          networkId: chainId,
+          value: isNativeCurrency ? amountUnits.toString() : undefined,
+        });
+
+        setTenderlyResult(result);
+
+        if (!result.success) {
+          setSimulationError(
+            new Error(result.error || "Tenderly simulation failed"),
+          );
+        }
+      } catch (err) {
+        setSimulationError(
+          err instanceof Error ? err : new Error("Simulation failed"),
+        );
+      } finally {
+        setIsSimulating(false);
+      }
+    },
+    [owner, currencyDecimals, tokenDecimals, tickSpacing, maxBidPrice, isNativeCurrency, ccaAddress, needsPermit, permitterAddress, chainId],
   );
 
   const exitBid = useCallback(
@@ -242,6 +328,7 @@ export function useBidActions({
     approveErc20ForPermit2,
     approvePermit2ForCCA,
     submitBid,
+    simulateBid,
     exitBid,
     claimTokens,
     claimTokensBatch,
@@ -252,5 +339,7 @@ export function useBidActions({
     error,
     reset,
     pendingAction,
+    tenderlyResult,
+    isSimulating,
   };
 }

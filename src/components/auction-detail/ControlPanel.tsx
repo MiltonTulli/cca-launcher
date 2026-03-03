@@ -4,7 +4,7 @@ import { useState } from "react";
 import { formatUnits, parseUnits } from "viem";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { AlertTriangle, CheckCircle2, Clock, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, TrendingUp, ExternalLink, XCircle, FlaskConical } from "lucide-react";
 import { CCAPhase, BidStatus } from "@/config/contracts";
 import { q96PriceToDisplay, q96Decode, blocksToTimeEstimate } from "@/lib/q96";
 import { shortenAddress, ZERO_ADDRESS } from "@/lib/utils";
@@ -263,6 +263,11 @@ function BidFormContent({
     actions.submitBid(amount, maxPrice, bidMode === "simple");
   };
 
+  const handleSimulate = () => {
+    actions.reset();
+    actions.simulateBid(amount, maxPrice, bidMode === "simple");
+  };
+
   if (!connectedAddress) {
     return (
       <div className="p-6 text-center">
@@ -412,12 +417,32 @@ function BidFormContent({
             <SubmitBidButton disabled />
           </div>
         ) : (
-          <SubmitBidButton
-            disabled={!amount || isBusy || (bidMode === "advanced" && !maxPrice)}
-            isSubmitting={isSubmitting}
-            isPending={actions.isPending}
-            isSuccess={actions.isSuccess && actions.pendingAction === "submitBid"}
-          />
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleSimulate}
+              disabled={!amount || isBusy || actions.isSimulating || (bidMode === "advanced" && !maxPrice)}
+              className="w-full flex items-center justify-center gap-2 border border-border bg-muted hover:bg-muted/80 disabled:bg-muted/50 disabled:text-muted-foreground text-foreground font-medium py-3 rounded-xl transition-all text-sm"
+            >
+              {actions.isSimulating ? (
+                <>
+                  <Spinner size="sm" />
+                  Simulating on Tenderly...
+                </>
+              ) : (
+                <>
+                  <FlaskConical className="h-4 w-4" />
+                  Simulate on Tenderly
+                </>
+              )}
+            </button>
+            <SubmitBidButton
+              disabled={!amount || isBusy || actions.isSimulating || (bidMode === "advanced" && !maxPrice)}
+              isSubmitting={isSubmitting}
+              isPending={actions.isPending}
+              isSuccess={actions.isSuccess && actions.pendingAction === "submitBid"}
+            />
+          </div>
         )}
 
         {/* Error */}
@@ -429,6 +454,46 @@ function BidFormContent({
                 ? actions.error.message.slice(0, 120) + "..."
                 : actions.error.message}
           </p>
+        )}
+
+        {/* Tenderly simulation result */}
+        {actions.tenderlyResult && (
+          <div
+            className={`text-xs rounded-xl border p-3 ${
+              actions.tenderlyResult.success
+                ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-200"
+                : "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-200"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium flex items-center gap-1.5">
+                {actions.tenderlyResult.success ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                ) : (
+                  <XCircle className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
+                )}
+                {actions.tenderlyResult.success ? "Simulation passed" : "Simulation failed"}
+              </span>
+              {actions.tenderlyResult.gasUsed > 0 && (
+                <span className="text-[11px] text-muted-foreground">
+                  Gas: {actions.tenderlyResult.gasUsed.toLocaleString()}
+                </span>
+              )}
+            </div>
+            {actions.tenderlyResult.error && (
+              <p className="mt-1 text-[11px] leading-tight">{actions.tenderlyResult.error}</p>
+            )}
+            <a
+              href={actions.tenderlyResult.simulationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 mt-1.5 text-[11px] underline hover:no-underline"
+            >
+              <FlaskConical className="h-2.5 w-2.5" />
+              View in Tenderly
+              <ExternalLink className="h-2.5 w-2.5" />
+            </a>
+          </div>
         )}
       </div>
     </form>
