@@ -11,6 +11,7 @@ import {LiquidityLockup} from "../src/LiquidityLockup.sol";
 import {LiquidityLockupFactory} from "../src/LiquidityLockupFactory.sol";
 import {CCAAdapter} from "../src/CCAAdapter.sol";
 import {PlatformFeeConfig} from "../src/types/LaunchTypes.sol";
+import {NetworkRegistry} from "./NetworkRegistry.sol";
 
 /// @title DeployAll
 /// @notice Deploys the full contract suite in the correct order
@@ -22,29 +23,27 @@ import {PlatformFeeConfig} from "../src/types/LaunchTypes.sol";
 ///     -vvvv
 ///
 /// Required env vars:
-///   DEPLOYER_PRIVATE_KEY  — private key of the deployer
-///   PLATFORM_ADMIN        — address of the platform admin
+///   DEPLOYER_PRIVATE_KEY   — private key of the deployer
+///   PLATFORM_ADMIN         — address of the platform admin
 ///   PLATFORM_FEE_RECIPIENT — address to receive platform fees
-///   CCA_FACTORY           — address of the CCA factory on target chain
-///   POOL_MANAGER          — address of Uniswap V4 PoolManager
-///   POSITION_MANAGER      — address of Uniswap V4 PositionManager
 ///
 /// Optional env vars:
-///   SALE_FEE_BPS          — sale fee in bps (default: 500 = 5%)
-///   LP_FEE_SHARE_BPS      — LP fee share in bps (default: 1500 = 15%)
-///   TOKEN_CREATION_FEE    — fee in wei for token creation (default: 0.001 ether)
-contract DeployAll is Script {
+///   SALE_FEE_BPS           — sale fee in bps (default: 50 = 0.5%)
+///   LP_FEE_SHARE_BPS       — LP fee share in bps (default: 1500 = 15%)
+///   TOKEN_CREATION_FEE     — fee in wei for token creation (default: 0.001 ether)
+///
+/// Network-specific addresses (poolManager, positionManager, ccaFactory)
+/// are resolved automatically via NetworkRegistry based on the target chain.
+contract DeployAll is Script, NetworkRegistry {
     function run() external {
         uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address platformAdmin = vm.envAddress("PLATFORM_ADMIN");
         address feeRecipient = vm.envAddress("PLATFORM_FEE_RECIPIENT");
-        address ccaFactoryAddr = vm.envAddress("CCA_FACTORY");
-        address poolManager = vm.envAddress("POOL_MANAGER");
-        address positionManager = vm.envAddress("POSITION_MANAGER");
-
+        uint256 tokenCreationFee = vm.envOr("TOKEN_CREATION_FEE", uint256(0.001 ether));
         uint16 saleFeeBps = uint16(vm.envOr("SALE_FEE_BPS", uint256(500)));
         uint16 lpFeeShareBps = uint16(vm.envOr("LP_FEE_SHARE_BPS", uint256(1500)));
-        uint256 tokenCreationFee = vm.envOr("TOKEN_CREATION_FEE", uint256(0.001 ether));
+
+        NetworkConfig memory net = _getNetworkConfig();
 
         vm.startBroadcast(deployerKey);
 
@@ -62,15 +61,15 @@ contract DeployAll is Script {
 
         // 4. PostAuctionHandler
         PostAuctionHandler postAuctionHandler = new PostAuctionHandler(
-            poolManager,
-            positionManager,
+            net.poolManager,
+            net.positionManager,
             address(lockupFactory),
             address(0) // vault implementation — not used in V1 PoC (virtual deploys)
         );
         console.log("PostAuctionHandler:", address(postAuctionHandler));
 
         // 5. CCAAdapter
-        CCAAdapter ccaAdapter = new CCAAdapter(ccaFactoryAddr);
+        CCAAdapter ccaAdapter = new CCAAdapter(net.ccaFactory);
         console.log("CCAAdapter:", address(ccaAdapter));
 
         // 6. OrchestratorDeployer

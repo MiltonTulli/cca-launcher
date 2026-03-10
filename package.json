@@ -8,6 +8,7 @@
     "lint": "pnpm --filter @launcher/app lint",
     "typecheck": "pnpm --filter @launcher/app typecheck",
     "export-abis": "pnpm --filter @launcher/sdk export-abis",
+    "export-addresses": "pnpm --filter @launcher/sdk export-addresses",
     "typecheck:sdk": "pnpm --filter @launcher/sdk typecheck"
   }
 }

@@ -1,6 +1,8 @@
-export { sepoliaAddresses } from "./sepolia";
-export { baseSepoliaAddresses } from "./baseSepolia";
+import { sepoliaAddresses } from "./sepolia";
+
 export { localhostAddresses } from "./localhost";
+export { baseSepoliaAddresses } from "./baseSepolia";
+export { sepoliaAddresses } from "./sepolia";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as const;
 
@@ -10,7 +12,7 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as const;
  */
 export const LAUNCH_FACTORY_ADDRESSES: Record<number, `0x${string}`> = {
   1: ZERO_ADDRESS, // Mainnet — TBD
-  11155111: "0xf30ae684807a41e9bd14e93b2aaeb2adcd0a1c12", // Sepolia
+  11155111: sepoliaAddresses.LaunchFactory, // Sepolia
   42161: ZERO_ADDRESS, // Arbitrum — TBD
   421614: ZERO_ADDRESS, // Arbitrum Sepolia — TBD
 };

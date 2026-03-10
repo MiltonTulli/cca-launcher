@@ -13,7 +13,8 @@
     "./helpers": "./src/helpers/index.ts"
   },
   "scripts": {
-    "export-abis": "npx tsx scripts/export-abis.ts",
+    "export-abis": "bun run scripts/export-abis.ts",
+    "export-addresses": "bun run scripts/export-addresses.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

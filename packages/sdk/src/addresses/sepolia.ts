@@ -1,8 +1,13 @@
+// Auto-generated from broadcast output — do not edit manually
+// Run: pnpm --filter @launcher/sdk export-addresses
+
 /** Sepolia (chainId: 11155111) deployed contract addresses */
 export const sepoliaAddresses = {
-  LaunchFactory: "0xf30ae684807a41e9bd14e93b2aaeb2adcd0a1c12",
-  TestUSDC: "0x71cd6f71b8c6d0f12514b83b381b9b1618accd3b",
-  AuctionToken: "0xe6b2ae6d6eee3d2b8225ce54962b3ae4fc653fa4",
-  PermitterFactory: "0x7a102f1d5646ddb6cc2fe7b74559f706a42491ea",
-  LockupContract: "0xe847b376e81806430c856726c46d0b9d028c1454",
+  TokenFactory: "0xa5afdf35dcc39b59f0216b1a34bc8345118c07cc",
+  LiquidityLockup: "0x8b37e3830ac1f36d0441276fd03dda110d79e3fb",
+  LiquidityLockupFactory: "0xfb8849150b8353421fe4ceefbabd64b3a964d26b",
+  PostAuctionHandler: "0x25e82c1c96fe5c60573b474db88bc65953977df4",
+  CCAAdapter: "0xf082c24924e544e815f40f7fff5a09d6710ceb2c",
+  OrchestratorDeployer: "0x0fa30cec0e673addca6f4e8f15af0240d5e6313f",
+  LaunchFactory: "0xfd92b927105fd17d90f833c4a8c062d04ed8c076",
 } as const;
