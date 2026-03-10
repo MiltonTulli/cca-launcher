@@ -9,7 +9,9 @@ import {ILiquidityLockup} from "./interfaces/ILiquidityLockup.sol";
 contract LiquidityLockupFactory {
     address public immutable implementation;
 
-    event LockupCreated(address indexed lockup, address indexed vault, address indexed beneficiary, uint64 unlockTimestamp);
+    event LockupCreated(
+        address indexed lockup, address indexed vault, address indexed beneficiary, uint64 unlockTimestamp
+    );
 
     constructor(address implementation_) {
         require(implementation_ != address(0), "LockupFactory: zero implementation");

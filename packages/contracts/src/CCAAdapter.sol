@@ -8,12 +8,9 @@ import {IAuctionInitializer} from "./interfaces/IAuctionInitializer.sol";
 /// @title IContinuousClearingAuctionFactory
 /// @notice Interface for the real Uniswap CCA factory
 interface IContinuousClearingAuctionFactory {
-    function initializeDistribution(
-        address token,
-        uint256 amount,
-        bytes calldata configData,
-        bytes32 salt
-    ) external returns (address cca);
+    function initializeDistribution(address token, uint256 amount, bytes calldata configData, bytes32 salt)
+        external
+        returns (address cca);
 }
 
 /// @title CCAAdapter
@@ -33,12 +30,11 @@ contract CCAAdapter is IAuctionInitializer {
     /// @inheritdoc IAuctionInitializer
     /// @dev Approves token spending to the CCA factory, then delegates to initializeDistribution.
     ///      configData is passed through as-is — the CCA factory decodes it internally.
-    function createAuction(
-        address token,
-        uint256 amount,
-        bytes calldata configData,
-        bytes32 salt
-    ) external override returns (address cca) {
+    function createAuction(address token, uint256 amount, bytes calldata configData, bytes32 salt)
+        external
+        override
+        returns (address cca)
+    {
         // Pull tokens from caller (LaunchOrchestrator)
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 

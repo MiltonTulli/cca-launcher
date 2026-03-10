@@ -98,12 +98,7 @@ contract SepoliaIntegrationTest is Test {
         });
 
         launchFactory = new LaunchFactory(
-            admin,
-            feeConfig,
-            address(deployer),
-            address(ccaAdapter),
-            mockPostAuctionHandler,
-            address(tokenFactory)
+            admin, feeConfig, address(deployer), address(ccaAdapter), mockPostAuctionHandler, address(tokenFactory)
         );
 
         vm.label(address(launchFactory), "LaunchFactory");
@@ -138,11 +133,7 @@ contract SepoliaIntegrationTest is Test {
         vm.prank(operator);
         address token = tokenFactory.createToken{value: TOKEN_CREATION_FEE}(
             TokenCreationParams({
-                name: "Fork Test Token",
-                symbol: "FTT",
-                decimals: 18,
-                initialSupply: 0,
-                initialHolder: address(0)
+                name: "Fork Test Token", symbol: "FTT", decimals: 18, initialSupply: 0, initialHolder: address(0)
             }),
             operator
         );
@@ -159,11 +150,7 @@ contract SepoliaIntegrationTest is Test {
         vm.prank(operator);
         address token = tokenFactory.createToken{value: TOKEN_CREATION_FEE}(
             TokenCreationParams({
-                name: "Launch Token",
-                symbol: "LT",
-                decimals: 18,
-                initialSupply: 0,
-                initialHolder: address(0)
+                name: "Launch Token", symbol: "LT", decimals: 18, initialSupply: 0, initialHolder: address(0)
             }),
             operator
         );

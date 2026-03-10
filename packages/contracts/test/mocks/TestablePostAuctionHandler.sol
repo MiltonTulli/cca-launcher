@@ -12,12 +12,9 @@ contract TestablePostAuctionHandler is PostAuctionHandler {
     uint256 public lastPositionTokenId;
     address public lastVaultDeployed;
 
-    constructor(
-        address poolManager_,
-        address positionManager_,
-        address lockupFactory_,
-        address vaultImplementation_
-    ) PostAuctionHandler(poolManager_, positionManager_, lockupFactory_, vaultImplementation_) {}
+    constructor(address poolManager_, address positionManager_, address lockupFactory_, address vaultImplementation_)
+        PostAuctionHandler(poolManager_, positionManager_, lockupFactory_, vaultImplementation_)
+    {}
 
     function _mintLPPosition(
         PoolKey memory, /* poolKey */
@@ -25,16 +22,21 @@ contract TestablePostAuctionHandler is PostAuctionHandler {
         int24, /* tickUpper */
         uint256, /* tokenAmount */
         uint256 /* paymentAmount */
-    ) internal override returns (uint256 positionTokenId) {
+    )
+        internal
+        override
+        returns (uint256 positionTokenId)
+    {
         positionTokenId = MockPositionManager(positionManager).mintPosition(address(this));
         lastPositionTokenId = positionTokenId;
     }
 
-    function _deployVault(uint256 positionTokenId_, VaultConfig calldata vaultConfig, address token, address paymentToken)
-        internal
-        override
-        returns (address vault)
-    {
+    function _deployVault(
+        uint256 positionTokenId_,
+        VaultConfig calldata vaultConfig,
+        address token,
+        address paymentToken
+    ) internal override returns (address vault) {
         vault = address(
             new MockLaunchLiquidityVault(
                 positionManager,

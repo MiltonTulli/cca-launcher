@@ -56,12 +56,7 @@ contract DeployFactory is Script {
         });
 
         LaunchFactory launchFactory = new LaunchFactory(
-            platformAdmin,
-            feeConfig,
-            address(deployer),
-            ccaAdapter,
-            postAuctionHandler,
-            tokenFactory
+            platformAdmin, feeConfig, address(deployer), ccaAdapter, postAuctionHandler, tokenFactory
         );
         console.log("LaunchFactory:", address(launchFactory));
 

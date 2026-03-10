@@ -19,9 +19,7 @@ contract MockPoolManager {
 
     function initialize(PoolKey memory key, uint160 sqrtPriceX96) external returns (int24 tick) {
         require(!shouldRevert, "MockPoolManager: revert");
-        initializeCalls.push(
-            InitializeCall({poolKeyHash: keccak256(abi.encode(key)), sqrtPriceX96: sqrtPriceX96})
-        );
+        initializeCalls.push(InitializeCall({poolKeyHash: keccak256(abi.encode(key)), sqrtPriceX96: sqrtPriceX96}));
         return 0; // mock tick
     }
 

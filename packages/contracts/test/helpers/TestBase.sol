@@ -103,8 +103,7 @@ abstract contract TestBase is Test {
                 validationHook: address(0)
             }),
             tokenAllocation: TokenAllocation({
-                auctionTokenAmount: AUCTION_TOKEN_AMOUNT,
-                liquidityTokenAmount: LIQUIDITY_TOKEN_AMOUNT
+                auctionTokenAmount: AUCTION_TOKEN_AMOUNT, liquidityTokenAmount: LIQUIDITY_TOKEN_AMOUNT
             }),
             liquidityConfig: LiquidityProvisionConfig({
                 enabled: true,
@@ -123,9 +122,7 @@ abstract contract TestBase is Test {
 
     function createDefaultVaultConfig() internal view returns (VaultConfig memory) {
         return VaultConfig({
-            platformBeneficiary: platformFeeRecipient,
-            creatorBeneficiary: treasury,
-            platformFeeBps: LP_FEE_SHARE_BPS
+            platformBeneficiary: platformFeeRecipient, creatorBeneficiary: treasury, platformFeeBps: LP_FEE_SHARE_BPS
         });
     }
 

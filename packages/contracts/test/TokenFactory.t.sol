@@ -20,11 +20,7 @@ contract TokenFactoryTest is Test {
 
     function _defaultParams() internal pure returns (TokenCreationParams memory) {
         return TokenCreationParams({
-            name: "Test Token",
-            symbol: "TEST",
-            decimals: 18,
-            initialSupply: 0,
-            initialHolder: address(0)
+            name: "Test Token", symbol: "TEST", decimals: 18, initialSupply: 0, initialHolder: address(0)
         });
     }
 

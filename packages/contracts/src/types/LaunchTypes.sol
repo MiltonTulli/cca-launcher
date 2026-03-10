@@ -10,7 +10,6 @@ enum TokenSource {
     EXISTING_BALANCE, // tokens already deposited in orchestrator
     EXISTING_TRANSFER_FROM, // pull via approve + transferFrom from operator
     CREATE_NEW // create via TokenFactory (deferred mint)
-
 }
 
 /// @notice Launch lifecycle states (persisted onchain)

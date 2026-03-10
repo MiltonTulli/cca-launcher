@@ -117,9 +117,7 @@ contract LaunchOrchestratorTest is TestBase {
 
         uint256 totalRequired = AUCTION_TOKEN_AMOUNT + LIQUIDITY_TOKEN_AMOUNT;
         vm.prank(operator);
-        vm.expectRevert(
-            abi.encodeWithSelector(InsufficientTokenBalance.selector, totalRequired, AUCTION_TOKEN_AMOUNT)
-        );
+        vm.expectRevert(abi.encodeWithSelector(InsufficientTokenBalance.selector, totalRequired, AUCTION_TOKEN_AMOUNT));
         orch2.finalizeSetup();
     }
 
@@ -263,18 +261,14 @@ contract LaunchOrchestratorTest is TestBase {
         _setupAndFinalizeAuction();
 
         vm.prank(operator);
-        vm.expectRevert(
-            abi.encodeWithSelector(AuctionNotEnded.selector, block.number, orchestrator.auctionEndBlock())
-        );
+        vm.expectRevert(abi.encodeWithSelector(AuctionNotEnded.selector, block.number, orchestrator.auctionEndBlock()));
         orchestrator.settleAuction();
     }
 
     function test_settleAuction_revertsWrongState() public {
         // In SETUP state, should fail
         vm.prank(operator);
-        vm.expectRevert(
-            abi.encodeWithSelector(InvalidState.selector, LaunchState.SETUP, LaunchState.FINALIZED)
-        );
+        vm.expectRevert(abi.encodeWithSelector(InvalidState.selector, LaunchState.SETUP, LaunchState.FINALIZED));
         orchestrator.settleAuction();
     }
 
@@ -388,9 +382,7 @@ contract LaunchOrchestratorTest is TestBase {
         _setupAndFinalizeAuction();
 
         vm.prank(operator);
-        vm.expectRevert(
-            abi.encodeWithSelector(InvalidState.selector, LaunchState.FINALIZED, LaunchState.AUCTION_ENDED)
-        );
+        vm.expectRevert(abi.encodeWithSelector(InvalidState.selector, LaunchState.FINALIZED, LaunchState.AUCTION_ENDED));
         orchestrator.processDistribution();
     }
 
@@ -481,9 +473,7 @@ contract LaunchOrchestratorTest is TestBase {
 
     function test_sweepToken_revertsWrongState() public {
         vm.prank(operator);
-        vm.expectRevert(
-            abi.encodeWithSelector(InvalidState.selector, LaunchState.SETUP, LaunchState.DISTRIBUTED)
-        );
+        vm.expectRevert(abi.encodeWithSelector(InvalidState.selector, LaunchState.SETUP, LaunchState.DISTRIBUTED));
         orchestrator.sweepToken();
     }
 

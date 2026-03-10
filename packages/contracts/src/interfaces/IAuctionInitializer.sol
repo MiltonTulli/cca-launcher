@@ -10,10 +10,7 @@ interface IAuctionInitializer {
     /// @param configData ABI-encoded auction parameters
     /// @param salt Deterministic deployment salt
     /// @return cca The address of the deployed auction contract
-    function createAuction(
-        address token,
-        uint256 amount,
-        bytes calldata configData,
-        bytes32 salt
-    ) external returns (address cca);
+    function createAuction(address token, uint256 amount, bytes calldata configData, bytes32 salt)
+        external
+        returns (address cca);
 }

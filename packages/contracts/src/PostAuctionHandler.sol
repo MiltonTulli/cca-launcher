@@ -24,12 +24,7 @@ contract PostAuctionHandler is IPostAuctionHandler, IERC721Receiver {
     address public immutable lockupFactory;
     address public immutable vaultImplementation;
 
-    constructor(
-        address poolManager_,
-        address positionManager_,
-        address lockupFactory_,
-        address vaultImplementation_
-    ) {
+    constructor(address poolManager_, address positionManager_, address lockupFactory_, address vaultImplementation_) {
         poolManager = IPoolManager(poolManager_);
         positionManager = positionManager_;
         lockupFactory = lockupFactory_;
@@ -54,8 +49,9 @@ contract PostAuctionHandler is IPostAuctionHandler, IERC721Receiver {
         _pullTokens(token, paymentToken, tokenAmount, paymentAmount);
 
         // Initialize pool + mint position
-        positionTokenId =
-            _initializeAndMint(token, paymentToken, tokenAmount, paymentAmount, poolFeeTier, tickSpacing, clearingPrice);
+        positionTokenId = _initializeAndMint(
+            token, paymentToken, tokenAmount, paymentAmount, poolFeeTier, tickSpacing, clearingPrice
+        );
 
         // Deploy vault + transfer NFT
         vault = _deployAndTransfer(positionTokenId, vaultConfig, token, paymentToken);
@@ -111,10 +107,12 @@ contract PostAuctionHandler is IPostAuctionHandler, IERC721Receiver {
         positionTokenId = _mintLPPosition(poolKey, tickLower, tickUpper, tokenAmount, paymentAmount);
     }
 
-    function _deployAndTransfer(uint256 positionTokenId_, VaultConfig calldata vaultConfig, address token, address paymentToken)
-        internal
-        returns (address vault)
-    {
+    function _deployAndTransfer(
+        uint256 positionTokenId_,
+        VaultConfig calldata vaultConfig,
+        address token,
+        address paymentToken
+    ) internal returns (address vault) {
         vault = _deployVault(positionTokenId_, vaultConfig, token, paymentToken);
         _transferPositionToVault(vault, positionTokenId_);
     }
@@ -138,7 +136,11 @@ contract PostAuctionHandler is IPostAuctionHandler, IERC721Receiver {
         int24, /* tickUpper */
         uint256, /* tokenAmount */
         uint256 /* paymentAmount */
-    ) internal virtual returns (uint256) {
+    )
+        internal
+        virtual
+        returns (uint256)
+    {
         // In production, this encodes V4 Actions (MINT_POSITION + SETTLE_PAIR)
         // and calls positionManager.modifyLiquidities(...)
         //
@@ -163,8 +165,7 @@ contract PostAuctionHandler is IPostAuctionHandler, IERC721Receiver {
 
     function _transferPositionToVault(address vault, uint256 positionTokenId_) internal virtual {
         bytes4 sig = bytes4(keccak256("safeTransferFrom(address,address,uint256)"));
-        (bool success,) =
-            positionManager.call(abi.encodeWithSelector(sig, address(this), vault, positionTokenId_));
+        (bool success,) = positionManager.call(abi.encodeWithSelector(sig, address(this), vault, positionTokenId_));
         require(success, "PostAuctionHandler: NFT transfer failed");
     }
 

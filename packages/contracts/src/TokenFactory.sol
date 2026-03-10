@@ -23,10 +23,12 @@ contract TokenFactory is ITokenFactory {
     }
 
     /// @inheritdoc ITokenFactory
-    function createToken(
-        TokenCreationParams calldata params,
-        address minter
-    ) external payable override returns (address token) {
+    function createToken(TokenCreationParams calldata params, address minter)
+        external
+        payable
+        override
+        returns (address token)
+    {
         if (msg.value < tokenCreationFee) {
             revert InsufficientFee(tokenCreationFee, msg.value);
         }

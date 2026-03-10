@@ -23,7 +23,11 @@ contract MockCCAFactory is IAuctionInitializer {
         uint256 amount,
         bytes calldata configData,
         bytes32 /* salt */
-    ) external override returns (address cca) {
+    )
+        external
+        override
+        returns (address cca)
+    {
         lastToken = token;
         lastAmount = amount;
         lastConfigData = configData;
@@ -32,10 +36,8 @@ contract MockCCAFactory is IAuctionInitializer {
             cca = presetCCA;
         } else {
             // Decode currency and fundsRecipient from configData
-            (address currency,, address fundsRecipient,,uint64 endBlock_,,,,) = abi.decode(
-                configData,
-                (address, address, address, uint64, uint64, uint64, uint256, address, bytes)
-            );
+            (address currency,, address fundsRecipient,, uint64 endBlock_,,,,) =
+                abi.decode(configData, (address, address, address, uint64, uint64, uint64, uint256, address, bytes));
             cca = address(new MockCCA(token, currency, fundsRecipient, endBlock_));
         }
 

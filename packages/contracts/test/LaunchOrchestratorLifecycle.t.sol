@@ -189,11 +189,7 @@ contract LaunchOrchestratorLifecycleTest is TestBase {
 
         // Step 1: Create token
         TokenCreationParams memory tokenParams = TokenCreationParams({
-            name: "Launch Token",
-            symbol: "LT",
-            decimals: 18,
-            initialSupply: 0,
-            initialHolder: address(0)
+            name: "Launch Token", symbol: "LT", decimals: 18, initialSupply: 0, initialHolder: address(0)
         });
 
         vm.deal(operator, 1 ether);
@@ -283,9 +279,7 @@ contract LaunchOrchestratorLifecycleTest is TestBase {
         LaunchOrchestrator orch = LaunchOrchestrator(orchAddr);
 
         vm.prank(operator);
-        vm.expectRevert(
-            abi.encodeWithSelector(InvalidState.selector, LaunchState.SETUP, LaunchState.FINALIZED)
-        );
+        vm.expectRevert(abi.encodeWithSelector(InvalidState.selector, LaunchState.SETUP, LaunchState.FINALIZED));
         orch.settleAuction();
     }
 
@@ -302,9 +296,7 @@ contract LaunchOrchestratorLifecycleTest is TestBase {
         orch.finalizeSetup();
 
         vm.prank(operator);
-        vm.expectRevert(
-            abi.encodeWithSelector(InvalidState.selector, LaunchState.FINALIZED, LaunchState.AUCTION_ENDED)
-        );
+        vm.expectRevert(abi.encodeWithSelector(InvalidState.selector, LaunchState.FINALIZED, LaunchState.AUCTION_ENDED));
         orch.processDistribution();
     }
 
@@ -321,9 +313,7 @@ contract LaunchOrchestratorLifecycleTest is TestBase {
         orch.finalizeSetup();
 
         vm.prank(operator);
-        vm.expectRevert(
-            abi.encodeWithSelector(InvalidState.selector, LaunchState.FINALIZED, LaunchState.SETUP)
-        );
+        vm.expectRevert(abi.encodeWithSelector(InvalidState.selector, LaunchState.FINALIZED, LaunchState.SETUP));
         orch.cancel();
     }
 
@@ -331,9 +321,7 @@ contract LaunchOrchestratorLifecycleTest is TestBase {
         LaunchOrchestrator orch = _createFullDistributedLaunch();
 
         vm.prank(operator);
-        vm.expectRevert(
-            abi.encodeWithSelector(InvalidState.selector, LaunchState.DISTRIBUTED, LaunchState.SETUP)
-        );
+        vm.expectRevert(abi.encodeWithSelector(InvalidState.selector, LaunchState.DISTRIBUTED, LaunchState.SETUP));
         orch.finalizeSetup();
     }
 

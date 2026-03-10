@@ -37,11 +37,7 @@ library PoolKeyLib {
     /// @param tickSpacing The pool's tick spacing
     /// @return tickLower The minimum usable tick
     /// @return tickUpper The maximum usable tick
-    function getFullRangeTicks(int24 tickSpacing)
-        internal
-        pure
-        returns (int24 tickLower, int24 tickUpper)
-    {
+    function getFullRangeTicks(int24 tickSpacing) internal pure returns (int24 tickLower, int24 tickUpper) {
         tickLower = (TickMath.MIN_TICK / tickSpacing) * tickSpacing;
         tickUpper = (TickMath.MAX_TICK / tickSpacing) * tickSpacing;
     }
