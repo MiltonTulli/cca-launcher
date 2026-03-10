@@ -1,101 +1,131 @@
-# Tally Launch POC
+# Tally Launcher
 
-A frontend interface for creating token launches using TallyLaunchFactory on Uniswap V4.
+A monorepo for the Tally token launch platform on Uniswap V4, including smart contracts, a TypeScript SDK, and a web application.
 
-## Features
+## Repository Structure
 
-- Connect wallet via WalletConnect/AppKit
-- Configure all launch parameters
-- Deploy launches to TallyLaunchFactory
-- View transaction confirmation and launch details
+```
+├── apps/
+│   └── web/                 # Next.js web application
+├── packages/
+│   ├── contracts/           # Solidity smart contracts (Foundry)
+│   └── sdk/                 # TypeScript SDK (ABIs, addresses, types)
+```
+
+### `packages/contracts`
+
+Foundry-based smart contracts for the launch platform:
+
+- **LaunchFactory** – Factory for creating launches
+- **LaunchOrchestrator** – Main orchestration contract (auction lifecycle)
+- **LaunchToken / TokenFactory** – ERC-20 token creation
+- **PostAuctionHandler** – Post-auction distribution logic
+- **LaunchLiquidityVault** – Liquidity management
+- **LiquidityLockup / LiquidityLockupFactory** – LP position lockup
+- **CCAAdapter** – Community CCA adapter
+
+Solidity 0.8.26, EVM target: `cancun`.
+
+### `packages/sdk`
+
+Typed TypeScript SDK consumed by the web app and other clients:
+
+- `@launcher/sdk/abi` – Auto-generated ABIs from Foundry artifacts
+- `@launcher/sdk/addresses` – Per-chain deployed contract addresses
+- `@launcher/sdk/types` – Shared types and enums (e.g. `LaunchState`)
+- `@launcher/sdk/helpers` – Address utilities and chain metadata
+
+### `apps/web`
+
+Next.js 15 (App Router) frontend for creating and managing launches.
+
+**Key dependencies:** React 19, wagmi v2, viem, Reown AppKit, Tailwind CSS, shadcn/ui, Upstash Redis, Tenderly.
+
+**Features:**
+- Create and configure token launches
+- Browse and bid on auctions
+- Draft management with Redis persistence
+- Transaction simulation via Tenderly
+- Multi-chain viewing (view launches on any supported chain without switching wallet)
 
 ## Tech Stack
 
-- **Next.js 15** - React framework
-- **shadcn/ui** - UI components
-- **Tailwind CSS** - Styling
-- **wagmi** - React hooks for Ethereum
-- **Reown AppKit** - Wallet connection
+| Layer | Technology |
+|-------|-----------|
+| Smart Contracts | Solidity 0.8.26, Foundry |
+| SDK | TypeScript, viem |
+| Frontend | Next.js 15, React 19, wagmi v2 |
+| Styling | Tailwind CSS, shadcn/ui |
+| Wallet | Reown AppKit (WalletConnect) |
+| Linting | Biome |
+| Package Manager | pnpm (workspaces) |
+| Data | Upstash Redis, Tenderly |
+
+## Supported Networks
+
+- Ethereum Mainnet
+- Sepolia
+- Base Sepolia
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- npm/yarn/pnpm
+- pnpm
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) (for contracts development)
 
 ### Installation
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd tally-launcher-poc
-
-# Install dependencies
-npm install
-
-# Copy environment variables
-cp .env.example .env.local
-
-# Add your WalletConnect Project ID to .env.local
-# Get one at https://cloud.reown.com
+pnpm install
 ```
+
+Copy environment variables:
+
+```bash
+cp .env.example .env.local
+```
+
+Required variables (see `.env.example`):
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` | [Reown Cloud](https://cloud.reown.com) project ID |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Upstash Redis credentials |
+| `TENDERLY_ACCESS_KEY` / `TENDERLY_ACCOUNT_SLUG` / `TENDERLY_PROJECT_SLUG` | Tenderly simulation |
+| `PERMIT_SIGNER_PRIVATE_KEY` | Server-side permit signer |
 
 ### Development
 
 ```bash
-npm run dev
+# Start the web app (port 3002)
+pnpm dev:web
+
+# Build the web app
+pnpm build
+
+# Lint
+pnpm lint
+
+# Type-check
+pnpm typecheck
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Build
+### Contracts
 
 ```bash
-npm run build
-npm start
+cd packages/contracts
+
+# Build contracts
+forge build
+
+# Run tests
+forge test
+
+# Export ABIs to SDK (from repo root)
+pnpm export-abis
 ```
-
-## Configuration
-
-### Contract Addresses
-
-Update the contract addresses in `src/config/contracts.ts`:
-
-```typescript
-export const TALLY_LAUNCH_FACTORY_ADDRESSES: Record<number, Address> = {
-  1: "0x...",      // Mainnet
-  11155111: "0x...", // Sepolia
-  8453: "0x...",    // Base
-  84532: "0x...",   // Base Sepolia
-};
-```
-
-### Supported Networks
-
-- Ethereum Mainnet
-- Sepolia Testnet
-- Base
-- Base Sepolia
-
-## Launch Parameters
-
-| Parameter | Description | Constraints |
-|-----------|-------------|-------------|
-| `token` | Token address to launch | Valid ERC-20 address |
-| `paymentToken` | Payment token (WETH, USDC, etc.) | Valid ERC-20 address |
-| `operator` | Launch operator address | Valid address |
-| `tokenAmount` | Amount of tokens to launch | > 0 |
-| `auctionDuration` | Auction duration | 1 hour - 30 days |
-| `pricingSteps` | Number of pricing steps | 1 - 1000 |
-| `reservePrice` | Minimum token price | > 0 |
-| `liquidityAllocation` | % to liquidity pool | 0 - 100% |
-| `treasuryAllocation` | % to treasury | 0 - 100% |
-| `poolFeeTier` | Uniswap V4 fee tier | 100, 500, 3000, 10000 |
-| `lockupDuration` | LP position lockup | 0 - 730 days |
-| `distributionDelay` | Delay before distribution | 0 - 30 days |
-| `treasury` | Treasury address | Valid address |
-| `positionBeneficiary` | LP position recipient | Valid address |
 
 ## License
 
