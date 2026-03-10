@@ -109,6 +109,7 @@ abstract contract TestBase is Test {
                 proceedsToLiquidityBps: 5000, // 50% of proceeds to LP
                 positionBeneficiary: positionBeneficiary,
                 poolFee: 3000,
+                tickSpacing: 60,
                 tickLower: -887220,
                 tickUpper: 887220,
                 lockupEnabled: false,

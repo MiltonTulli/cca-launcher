@@ -6,6 +6,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
+import {Actions} from "@uniswap/v4-periphery/src/libraries/Actions.sol";
+
 import {ILaunchLiquidityVault} from "./interfaces/ILaunchLiquidityVault.sol";
 import {ILiquidityLockup} from "./interfaces/ILiquidityLockup.sol";
 
@@ -44,7 +47,7 @@ contract LaunchLiquidityVault is ILaunchLiquidityVault, IERC721Receiver, Reentra
         require(positionManager_ != address(0), "Vault: zero positionManager");
         require(platformBeneficiary_ != address(0), "Vault: zero platformBeneficiary");
         require(creatorBeneficiary_ != address(0), "Vault: zero creatorBeneficiary");
-        require(platformFeeBps_ <= 10_000, "Vault: fee exceeds 100%");
+        require(platformFeeBps_ < 10_000, "Vault: fee must leave creator share");
 
         positionManagerAddr = positionManager_;
         positionTokenId = positionTokenId_;
@@ -135,13 +138,28 @@ contract LaunchLiquidityVault is ILaunchLiquidityVault, IERC721Receiver, Reentra
     // INTERNAL — Fee Collection (virtual for testing)
     // ============================================
 
-    /// @dev Collect accumulated fees from V4 position. Override in tests.
+    /// @dev Collect accumulated fees from V4 position via DECREASE_LIQUIDITY(0) + TAKE_PAIR.
+    ///      Override in tests to use mock.
     function _collectFees() internal virtual returns (uint256 fee0, uint256 fee1) {
-        // In production, this calls positionManager with COLLECT action
-        // For V1 PoC, this is virtual — overridden in tests.
-        // Any tokens already in the vault (sent directly) are treated as fees.
-        fee0 = IERC20(token0).balanceOf(address(this));
-        fee1 = IERC20(token1).balanceOf(address(this));
+        uint256 balance0Before = IERC20(token0).balanceOf(address(this));
+        uint256 balance1Before = IERC20(token1).balanceOf(address(this));
+
+        // Encode: DECREASE_LIQUIDITY with 0 liquidity (collects fees) + TAKE_PAIR (sends to vault)
+        bytes memory actions = new bytes(2);
+        actions[0] = bytes1(uint8(Actions.DECREASE_LIQUIDITY));
+        actions[1] = bytes1(uint8(Actions.TAKE_PAIR));
+
+        bytes[] memory params = new bytes[](2);
+        params[0] = abi.encode(positionTokenId, uint256(0), uint128(0), uint128(0), bytes(""));
+        params[1] = abi.encode(Currency.wrap(token0), Currency.wrap(token1), address(this));
+
+        (bool success,) = positionManagerAddr.call(
+            abi.encodeWithSignature("modifyLiquidities(bytes,uint256)", abi.encode(actions, params), block.timestamp)
+        );
+        require(success, "Vault: fee collection failed");
+
+        fee0 = IERC20(token0).balanceOf(address(this)) - balance0Before;
+        fee1 = IERC20(token1).balanceOf(address(this)) - balance1Before;
     }
 
     // ============================================

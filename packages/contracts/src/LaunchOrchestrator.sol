@@ -68,6 +68,7 @@ contract LaunchOrchestrator is ILaunchOrchestrator, ReentrancyGuard {
     uint16 public immutable proceedsToLiquidityBps;
     address public immutable positionBeneficiary;
     uint24 public immutable poolFee;
+    int24 public immutable tickSpacing;
     int24 public immutable tickLower;
     int24 public immutable tickUpper;
     bool public immutable lockupEnabled;
@@ -163,6 +164,7 @@ contract LaunchOrchestrator is ILaunchOrchestrator, ReentrancyGuard {
         proceedsToLiquidityBps = params.liquidityConfig.proceedsToLiquidityBps;
         positionBeneficiary = params.liquidityConfig.positionBeneficiary;
         poolFee = params.liquidityConfig.poolFee;
+        tickSpacing = params.liquidityConfig.tickSpacing;
         tickLower = params.liquidityConfig.tickLower;
         tickUpper = params.liquidityConfig.tickUpper;
         lockupEnabled = params.liquidityConfig.lockupEnabled;
@@ -337,7 +339,7 @@ contract LaunchOrchestrator is ILaunchOrchestrator, ReentrancyGuard {
                     tokenLiqAmount,
                     liquidityPaymentAmount,
                     poolFee,
-                    tickUpper - tickLower > 0 ? int24(60) : int24(60), // tick spacing
+                    tickSpacing,
                     clearingPrice_,
                     vaultCfg,
                     lockupEnabled,
@@ -442,8 +444,14 @@ contract LaunchOrchestrator is ILaunchOrchestrator, ReentrancyGuard {
             if (token == address(0)) revert TokenNotCreated();
             // Mint required supply to orchestrator
             // LaunchToken exposes mint(address, uint256) gated by MINTER_ROLE
-            (bool ok,) = token.call(abi.encodeWithSignature("mint(address,uint256)", address(this), totalTokenAmount));
-            require(ok, "Mint failed");
+            (bool ok, bytes memory returnData) =
+                token.call(abi.encodeWithSignature("mint(address,uint256)", address(this), totalTokenAmount));
+            if (!ok) {
+                // Forward the original revert reason for better debugging
+                assembly {
+                    revert(add(returnData, 32), mload(returnData))
+                }
+            }
         }
     }
 

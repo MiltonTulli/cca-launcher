@@ -171,6 +171,7 @@ contract SepoliaIntegrationTest is Test {
                 proceedsToLiquidityBps: 0,
                 positionBeneficiary: address(0),
                 poolFee: 0,
+                tickSpacing: 0,
                 tickLower: 0,
                 tickUpper: 0,
                 lockupEnabled: false,

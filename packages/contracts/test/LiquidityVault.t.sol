@@ -5,6 +5,7 @@ import {TestBase} from "./helpers/TestBase.sol";
 import {LaunchLiquidityVault} from "../src/LaunchLiquidityVault.sol";
 import {ILaunchLiquidityVault} from "../src/interfaces/ILaunchLiquidityVault.sol";
 import {MockLiquidityLockup} from "./mocks/MockLiquidityLockup.sol";
+import {TestableVault} from "./mocks/TestableVault.sol";
 
 contract LiquidityVaultTest is TestBase {
     LaunchLiquidityVault public vault;
@@ -16,7 +17,9 @@ contract LiquidityVaultTest is TestBase {
         // Mint a position NFT
         tokenId = positionManager.mintPosition(address(this));
 
-        vault = new LaunchLiquidityVault(
+        // Use TestableVault which overrides _collectFees to use balance-based approach
+        // (real V4 fee collection is tested in fork/integration tests)
+        vault = new TestableVault(
             address(positionManager),
             tokenId,
             platformFeeRecipient,

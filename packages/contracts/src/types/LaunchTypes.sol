@@ -78,6 +78,7 @@ struct LiquidityProvisionConfig {
     uint16 proceedsToLiquidityBps;
     address positionBeneficiary;
     uint24 poolFee;
+    int24 tickSpacing;
     int24 tickLower;
     int24 tickUpper;
     bool lockupEnabled;

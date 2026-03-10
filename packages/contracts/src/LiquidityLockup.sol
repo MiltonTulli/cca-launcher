@@ -18,7 +18,7 @@ contract LiquidityLockup is ILiquidityLockup {
         require(!_initialized, "Lockup: already initialized");
         require(vault_ != address(0), "Lockup: zero vault");
         require(beneficiary_ != address(0), "Lockup: zero beneficiary");
-        require(unlockTimestamp_ > block.timestamp, "Lockup: unlock in the past");
+        require(unlockTimestamp_ > block.timestamp, "Lockup: unlock must be in the future");
 
         vault = vault_;
         beneficiary = beneficiary_;

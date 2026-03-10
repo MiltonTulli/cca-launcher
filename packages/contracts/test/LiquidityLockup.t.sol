@@ -95,7 +95,7 @@ contract LiquidityLockupTest is Test {
 
     function test_initialize_revertsPastTimestamp() public {
         LiquidityLockup lockup = new LiquidityLockup();
-        vm.expectRevert("Lockup: unlock in the past");
+        vm.expectRevert("Lockup: unlock must be in the future");
         lockup.initialize(vault, beneficiary, uint64(block.timestamp));
     }
 

@@ -7,9 +7,13 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 
 import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
+import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
+
+import {Actions} from "@uniswap/v4-periphery/src/libraries/Actions.sol";
 
 import {IPostAuctionHandler} from "./interfaces/IPostAuctionHandler.sol";
 import {VaultConfig} from "./types/LaunchTypes.sol";
+import {LaunchLiquidityVault} from "./LaunchLiquidityVault.sol";
 import {PriceLib} from "./lib/PriceLib.sol";
 import {PoolKeyLib} from "./lib/PoolKeyLib.sol";
 
@@ -104,7 +108,12 @@ contract PostAuctionHandler is IPostAuctionHandler, IERC721Receiver {
         _initializePool(poolKey, PriceLib.clearingPriceToSqrtPriceX96(clearingPrice, token, paymentToken));
 
         (int24 tickLower, int24 tickUpper) = PoolKeyLib.getFullRangeTicks(tickSpacing);
-        positionTokenId = _mintLPPosition(poolKey, tickLower, tickUpper, tokenAmount, paymentAmount);
+
+        // Sort amounts to match poolKey currency ordering (currency0 < currency1 by address)
+        (uint256 amount0, uint256 amount1) =
+            token < paymentToken ? (tokenAmount, paymentAmount) : (paymentAmount, tokenAmount);
+
+        positionTokenId = _mintLPPosition(poolKey, tickLower, tickUpper, amount0, amount1);
     }
 
     function _deployAndTransfer(
@@ -129,34 +138,91 @@ contract PostAuctionHandler is IPostAuctionHandler, IERC721Receiver {
     // INTERNAL — LP Position Minting (virtual for testing)
     // ============================================
 
-    /// @dev Mints a full-range LP position. Override in tests to use mock.
-    function _mintLPPosition(
-        PoolKey memory, /* poolKey */
-        int24, /* tickLower */
-        int24, /* tickUpper */
-        uint256, /* tokenAmount */
-        uint256 /* paymentAmount */
-    )
+    /// @dev Mints a full-range LP position via Uniswap V4 PositionManager.
+    ///      Transfers tokens to the PositionManager, then encodes MINT_POSITION_FROM_DELTAS
+    ///      + SETTLE (payerIsUser=false, tokens already in PM) + SWEEP (refund unused).
+    ///      Override in tests to use mock.
+    /// @param poolKey The Uniswap V4 pool key (currencies already sorted)
+    /// @param tickLower Lower tick bound (aligned to tick spacing)
+    /// @param tickUpper Upper tick bound (aligned to tick spacing)
+    /// @param amount0 Amount of currency0 to provide (sorted order)
+    /// @param amount1 Amount of currency1 to provide (sorted order)
+    function _mintLPPosition(PoolKey memory poolKey, int24 tickLower, int24 tickUpper, uint256 amount0, uint256 amount1)
         internal
         virtual
-        returns (uint256)
+        returns (uint256 positionTokenId)
     {
-        // In production, this encodes V4 Actions (MINT_POSITION + SETTLE_PAIR)
-        // and calls positionManager.modifyLiquidities(...)
-        //
-        // For V1 PoC, this is a virtual function overridden in tests.
-        // Production V4 encoding will be added for fork tests.
-        revert("PostAuctionHandler: _mintLPPosition not implemented");
+        // Get the next token ID (deterministic before minting)
+        (bool okId, bytes memory idData) = positionManager.staticcall(abi.encodeWithSignature("nextTokenId()"));
+        require(okId, "PostAuctionHandler: nextTokenId failed");
+        positionTokenId = abi.decode(idData, (uint256));
+
+        // Transfer tokens to PositionManager so SETTLE(payerIsUser=false) can pay the PoolManager
+        IERC20(Currency.unwrap(poolKey.currency0)).safeTransfer(positionManager, amount0);
+        IERC20(Currency.unwrap(poolKey.currency1)).safeTransfer(positionManager, amount1);
+
+        // Encode action sequence:
+        // 1. MINT_POSITION_FROM_DELTAS — creates LP, generates debt deltas
+        // 2. SETTLE currency0 — PositionManager pays PoolManager from its own balance
+        // 3. SETTLE currency1 — same
+        // 4. SWEEP currency0 — return unused tokens to this contract
+        // 5. SWEEP currency1 — same
+        bytes memory actions = new bytes(5);
+        actions[0] = bytes1(uint8(Actions.MINT_POSITION_FROM_DELTAS));
+        actions[1] = bytes1(uint8(Actions.SETTLE));
+        actions[2] = bytes1(uint8(Actions.SETTLE));
+        actions[3] = bytes1(uint8(Actions.SWEEP));
+        actions[4] = bytes1(uint8(Actions.SWEEP));
+
+        bytes[] memory params = new bytes[](5);
+        params[0] = abi.encode(
+            poolKey,
+            tickLower,
+            tickUpper,
+            type(uint128).max, // amount0Max — no slippage limit (new pool, we control price)
+            type(uint128).max, // amount1Max
+            address(this), // owner of the NFT (transferred to vault later)
+            bytes("") // hookData
+        );
+        // SETTLE with payerIsUser=false: PositionManager is the payer (tokens already transferred there)
+        // OPEN_DELTA (0) settles exact debt amount
+        params[1] = abi.encode(poolKey.currency0, uint256(0), false);
+        params[2] = abi.encode(poolKey.currency1, uint256(0), false);
+        // SWEEP: return any unused tokens back to this contract
+        params[3] = abi.encode(poolKey.currency0, address(this));
+        params[4] = abi.encode(poolKey.currency1, address(this));
+
+        (bool success,) = positionManager.call(
+            abi.encodeWithSignature("modifyLiquidities(bytes,uint256)", abi.encode(actions, params), block.timestamp)
+        );
+        require(success, "PostAuctionHandler: modifyLiquidities failed");
     }
 
     // ============================================
     // INTERNAL — Vault Deployment (virtual for testing)
     // ============================================
 
-    function _deployVault(uint256, VaultConfig calldata, address, address) internal virtual returns (address) {
-        // Deploy vault — production version uses new LaunchLiquidityVault(...)
-        // For V1 PoC, this is virtual to allow test overrides.
-        revert("PostAuctionHandler: _deployVault not implemented");
+    function _deployVault(
+        uint256 positionTokenId_,
+        VaultConfig calldata vaultConfig,
+        address token,
+        address paymentToken
+    ) internal virtual returns (address) {
+        // Sort tokens to match LP position currency ordering
+        (address token0, address token1) = token < paymentToken ? (token, paymentToken) : (paymentToken, token);
+
+        return address(
+            new LaunchLiquidityVault(
+                positionManager,
+                positionTokenId_,
+                vaultConfig.platformBeneficiary,
+                vaultConfig.creatorBeneficiary,
+                vaultConfig.platformFeeBps,
+                token0,
+                token1,
+                msg.sender // owner = orchestrator (the caller)
+            )
+        );
     }
 
     // ============================================

@@ -70,7 +70,6 @@ contract LaunchFactory is ILaunchFactory {
         returns (uint256 launchId, address launcherAddress)
     {
         if (params.operator == address(0)) revert ZeroAddress();
-        if (params.paymentToken == address(0)) revert ZeroAddress();
 
         launchId = launchCount++;
 

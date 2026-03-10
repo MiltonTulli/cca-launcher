@@ -88,12 +88,13 @@ contract LaunchFactoryTest is TestBase {
         launchFactory.createLaunch(params);
     }
 
-    function test_createLaunch_revertsZeroPaymentToken() public {
+    function test_createLaunch_allowsNativeEthPaymentToken() public {
         LaunchParams memory params = createDefaultLaunchParams();
-        params.paymentToken = address(0);
+        params.paymentToken = address(0); // native ETH
 
-        vm.expectRevert(ZeroAddress.selector);
-        launchFactory.createLaunch(params);
+        (uint256 launchId, address launcher) = launchFactory.createLaunch(params);
+        assertTrue(launcher != address(0), "Launcher should be deployed with native ETH payment");
+        assertEq(launchId, 0);
     }
 
     function test_updateFeeConfig_onlyAdmin() public {
