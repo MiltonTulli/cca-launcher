@@ -12,10 +12,6 @@ import {ITokenFactory} from "./interfaces/ITokenFactory.sol";
 import {ICCA} from "./interfaces/ICCA.sol";
 import {
     LaunchParams,
-    AuctionConfig,
-    TokenAllocation,
-    SettlementConfig,
-    LiquidityProvisionConfig,
     LiquidityInfo,
     VaultConfig,
     TokenCreationParams,
@@ -27,14 +23,10 @@ import {
     InvalidState,
     OnlyOperator,
     InsufficientTokenBalance,
-    InsufficientAllowance,
     AuctionSupplyMustBePositive,
     AuctionNotEnded,
     DistributionNotPermissionless,
-    AuctionHasNoBids,
-    AuctionNotFailed,
     InvalidAddress,
-    ZeroAddress,
     TokenNotCreated,
     TokenAlreadyCreated,
     InvalidTokenSource

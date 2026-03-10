@@ -7,7 +7,6 @@ import {TokenFactory} from "../src/TokenFactory.sol";
 import {LaunchFactory} from "../src/LaunchFactory.sol";
 import {OrchestratorDeployer} from "../src/OrchestratorDeployer.sol";
 import {PostAuctionHandler} from "../src/PostAuctionHandler.sol";
-import {LaunchLiquidityVault} from "../src/LaunchLiquidityVault.sol";
 import {LiquidityLockup} from "../src/LiquidityLockup.sol";
 import {LiquidityLockupFactory} from "../src/LiquidityLockupFactory.sol";
 import {CCAAdapter} from "../src/CCAAdapter.sol";

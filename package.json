@@ -6,6 +6,8 @@
     "dev:web": "pnpm --filter @launcher/app dev",
     "build": "pnpm --filter @launcher/app build",
     "lint": "pnpm --filter @launcher/app lint",
-    "typecheck": "pnpm --filter @launcher/app typecheck"
+    "typecheck": "pnpm --filter @launcher/app typecheck",
+    "export-abis": "pnpm --filter @launcher/sdk export-abis",
+    "typecheck:sdk": "pnpm --filter @launcher/sdk typecheck"
   }
 }

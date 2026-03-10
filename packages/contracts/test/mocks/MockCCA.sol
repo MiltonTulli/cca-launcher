@@ -106,7 +106,7 @@ contract MockCCA is ICCA {
         // Transfer any remaining tokens to tokensRecipient
         uint256 balance = IERC20(_token).balanceOf(address(this));
         if (balance > 0) {
-            IERC20(_token).transfer(_tokensRecipient, balance);
+            require(IERC20(_token).transfer(_tokensRecipient, balance), "transfer failed");
         }
     }
 
@@ -120,7 +120,7 @@ contract MockCCA is ICCA {
         } else {
             uint256 balance = IERC20(_currency).balanceOf(address(this));
             if (balance > 0) {
-                IERC20(_currency).transfer(_fundsRecipient, balance);
+                require(IERC20(_currency).transfer(_fundsRecipient, balance), "transfer failed");
             }
         }
     }

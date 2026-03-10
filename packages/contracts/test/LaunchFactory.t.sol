@@ -6,7 +6,7 @@ import {LaunchFactory} from "../src/LaunchFactory.sol";
 import {OrchestratorDeployer} from "../src/OrchestratorDeployer.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
 import {ILaunchFactory} from "../src/interfaces/ILaunchFactory.sol";
-import {LaunchParams, PlatformFeeConfig, TokenSource} from "../src/types/LaunchTypes.sol";
+import {LaunchParams, PlatformFeeConfig} from "../src/types/LaunchTypes.sol";
 import {ZeroAddress, NotPlatformAdmin, NotPendingPlatformAdmin} from "../src/errors/LaunchErrors.sol";
 
 contract LaunchFactoryTest is TestBase {

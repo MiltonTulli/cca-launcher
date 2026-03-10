@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {LaunchParams, PlatformFeeConfig} from "../types/LaunchTypes.sol";
+import {LaunchParams} from "../types/LaunchTypes.sol";
 
 /// @title IOrchestratorDeployer
 /// @notice Thin deployer interface for LaunchOrchestrator instances

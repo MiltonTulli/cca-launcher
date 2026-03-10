@@ -10,8 +10,7 @@ import {
     LiquidityProvisionConfig,
     PlatformFeeConfig,
     VaultConfig,
-    TokenSource,
-    LaunchState
+    TokenSource
 } from "../../src/types/LaunchTypes.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 import {MockCCAFactory} from "../mocks/MockCCAFactory.sol";

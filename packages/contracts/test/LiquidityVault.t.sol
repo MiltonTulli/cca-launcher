@@ -4,7 +4,6 @@ pragma solidity 0.8.26;
 import {TestBase} from "./helpers/TestBase.sol";
 import {LaunchLiquidityVault} from "../src/LaunchLiquidityVault.sol";
 import {ILaunchLiquidityVault} from "../src/interfaces/ILaunchLiquidityVault.sol";
-import {MockPositionManager} from "./mocks/MockPositionManager.sol";
 import {MockLiquidityLockup} from "./mocks/MockLiquidityLockup.sol";
 
 contract LiquidityVaultTest is TestBase {
