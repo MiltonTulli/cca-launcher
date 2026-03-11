@@ -22,6 +22,7 @@ interface ILaunchOrchestrator {
     event OperatorTransferred(address indexed previousOperator, address indexed newOperator);
     event TokenSwept(address indexed token, uint256 amount);
     event PaymentTokenSwept(address indexed token, uint256 amount);
+    event EmergencyRescue(address indexed tokenAddress, address indexed to, uint256 amount);
 
     // ============================================
     // TOKEN CREATION (CREATE_NEW only)
@@ -70,6 +71,11 @@ interface ILaunchOrchestrator {
 
     /// @notice Sweep residual payment tokens to treasury
     function sweepPaymentToken() external;
+
+    /// @notice Emergency rescue any token or ETH stuck in the orchestrator
+    /// @dev Immediate in terminal states; requires safety delay in non-terminal states
+    /// @param tokenAddress ERC20 address to rescue, or address(0) for native ETH
+    function emergencyRescue(address tokenAddress) external;
 
     // ============================================
     // VIEW FUNCTIONS

@@ -130,9 +130,19 @@ export const launchFactoryAbi = [
                 "internalType": "uint64"
               },
               {
+                "name": "auctionTickSpacing",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
                 "name": "reservePrice",
                 "type": "uint256",
                 "internalType": "uint256"
+              },
+              {
+                "name": "requiredCurrencyRaised",
+                "type": "uint128",
+                "internalType": "uint128"
               },
               {
                 "name": "auctionStepsData",

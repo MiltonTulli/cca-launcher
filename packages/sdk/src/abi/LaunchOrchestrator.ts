@@ -61,9 +61,19 @@ export const launchOrchestratorAbi = [
                 "internalType": "uint64"
               },
               {
+                "name": "auctionTickSpacing",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
                 "name": "reservePrice",
                 "type": "uint256",
                 "internalType": "uint256"
+              },
+              {
+                "name": "requiredCurrencyRaised",
+                "type": "uint128",
+                "internalType": "uint128"
               },
               {
                 "name": "auctionStepsData",
@@ -281,6 +291,19 @@ export const launchOrchestratorAbi = [
   },
   {
     "type": "function",
+    "name": "auctionTickSpacing",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "auctionTokenAmount",
     "inputs": [],
     "outputs": [
@@ -377,6 +400,19 @@ export const launchOrchestratorAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "emergencyRescue",
+    "inputs": [
+      {
+        "name": "tokenAddress",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -674,6 +710,19 @@ export const launchOrchestratorAbi = [
   },
   {
     "type": "function",
+    "name": "requiredCurrencyRaised",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint128",
+        "internalType": "uint128"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "reservePrice",
     "inputs": [],
     "outputs": [
@@ -952,6 +1001,31 @@ export const launchOrchestratorAbi = [
   },
   {
     "type": "event",
+    "name": "EmergencyRescue",
+    "inputs": [
+      {
+        "name": "tokenAddress",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "LaunchCancelled",
     "inputs": [
       {
@@ -1199,6 +1273,22 @@ export const launchOrchestratorAbi = [
     "type": "error",
     "name": "ReentrancyGuardReentrantCall",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RescueNotAvailable",
+    "inputs": [
+      {
+        "name": "currentBlock",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "availableBlock",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   },
   {
     "type": "error",

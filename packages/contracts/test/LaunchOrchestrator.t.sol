@@ -16,8 +16,10 @@ import {
     AuctionSupplyMustBePositive,
     AuctionNotEnded,
     DistributionNotPermissionless,
-    InvalidAddress
+    InvalidAddress,
+    RescueNotAvailable
 } from "../src/errors/LaunchErrors.sol";
+import {MockERC20} from "./mocks/MockERC20.sol";
 
 /// @notice Unit tests for LaunchOrchestrator individual functions
 contract LaunchOrchestratorTest is TestBase {
@@ -526,5 +528,111 @@ contract LaunchOrchestratorTest is TestBase {
 
         vm.prank(operator);
         orchestrator.processDistribution();
+    }
+
+    // ============================================
+    // EMERGENCY RESCUE
+    // ============================================
+
+    function test_emergencyRescue_terminalState_cancelled() public {
+        // Send some tokens to orchestrator
+        auctionToken.mint(address(orchestrator), 1000e18);
+
+        vm.prank(operator);
+        orchestrator.cancel();
+
+        assertEq(uint8(orchestrator.state()), uint8(LaunchState.CANCELLED));
+
+        // Rescue should work immediately in CANCELLED state
+        vm.prank(operator);
+        orchestrator.emergencyRescue(address(auctionToken));
+
+        assertEq(auctionToken.balanceOf(address(orchestrator)), 0);
+        // cancel() sends to treasury, then rescue sends remaining
+        assertGt(auctionToken.balanceOf(treasury), 0);
+    }
+
+    function test_emergencyRescue_terminalState_auctionFailed() public {
+        _setupAndFinalizeAuction();
+
+        advanceToAuctionEnd(orchestrator.auctionEndBlock());
+
+        // No bids → auction fails (not graduated)
+        vm.prank(operator);
+        orchestrator.settleAuction();
+
+        assertEq(uint8(orchestrator.state()), uint8(LaunchState.AUCTION_FAILED));
+
+        // Send accidental tokens
+        paymentToken.mint(address(orchestrator), 500e6);
+
+        vm.prank(operator);
+        orchestrator.emergencyRescue(address(paymentToken));
+
+        assertEq(paymentToken.balanceOf(address(orchestrator)), 0);
+    }
+
+    function test_emergencyRescue_terminalState_distributed() public {
+        _setupDistributedLaunch();
+
+        // Send accidental random token
+        MockERC20 randomToken = new MockERC20("Random", "RND", 18);
+        randomToken.mint(address(orchestrator), 999e18);
+
+        vm.prank(operator);
+        orchestrator.emergencyRescue(address(randomToken));
+
+        assertEq(randomToken.balanceOf(address(orchestrator)), 0);
+        assertEq(randomToken.balanceOf(treasury), 999e18);
+    }
+
+    function test_emergencyRescue_nativeETH() public {
+        vm.prank(operator);
+        orchestrator.cancel();
+
+        // Send ETH to orchestrator
+        vm.deal(address(orchestrator), 1 ether);
+
+        uint256 treasuryBefore = treasury.balance;
+
+        vm.prank(operator);
+        orchestrator.emergencyRescue(address(0));
+
+        assertEq(address(orchestrator).balance, 0);
+        assertEq(treasury.balance, treasuryBefore + 1 ether);
+    }
+
+    function test_emergencyRescue_revertsNonOperator() public {
+        vm.prank(operator);
+        orchestrator.cancel();
+
+        vm.prank(user1);
+        vm.expectRevert(abi.encodeWithSelector(OnlyOperator.selector, user1, operator));
+        orchestrator.emergencyRescue(address(auctionToken));
+    }
+
+    function test_emergencyRescue_revertsBeforeDelay_finalized() public {
+        _setupAndFinalizeAuction();
+
+        // Try rescue in FINALIZED state before delay — should revert
+        vm.prank(operator);
+        vm.expectRevert(); // RescueNotAvailable
+        orchestrator.emergencyRescue(address(auctionToken));
+    }
+
+    function test_emergencyRescue_worksAfterDelay_finalized() public {
+        _setupAndFinalizeAuction();
+
+        // Advance past rescue delay (auctionEndBlockConfig + 2 * permissionlessDistributionDelay)
+        uint256 rescueBlock = uint256(orchestrator.auctionEndBlockConfig()) + uint256(orchestrator.permissionlessDistributionDelay()) * 2;
+        vm.roll(rescueBlock);
+
+        // Send accidental tokens
+        paymentToken.mint(address(orchestrator), 100e6);
+
+        vm.prank(operator);
+        orchestrator.emergencyRescue(address(paymentToken));
+
+        assertEq(paymentToken.balanceOf(address(orchestrator)), 0);
     }
 }

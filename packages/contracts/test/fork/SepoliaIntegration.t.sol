@@ -161,7 +161,9 @@ contract SepoliaIntegrationTest is Test {
                 startBlock: uint64(block.number + 10),
                 endBlock: uint64(block.number + 100),
                 claimBlock: uint64(block.number + 100),
+                auctionTickSpacing: 1,
                 reservePrice: 1e6,
+                requiredCurrencyRaised: 0,
                 auctionStepsData: "",
                 validationHook: address(0)
             }),

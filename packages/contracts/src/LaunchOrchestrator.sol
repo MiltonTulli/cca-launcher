@@ -10,6 +10,7 @@ import {IAuctionInitializer} from "./interfaces/IAuctionInitializer.sol";
 import {IPostAuctionHandler} from "./interfaces/IPostAuctionHandler.sol";
 import {ITokenFactory} from "./interfaces/ITokenFactory.sol";
 import {ICCA} from "./interfaces/ICCA.sol";
+import {AuctionParameters} from "@uniswap/cca/interfaces/IContinuousClearingAuction.sol";
 import {CurrencyLib} from "./lib/CurrencyLib.sol";
 import {
     LaunchParams,
@@ -30,7 +31,8 @@ import {
     InvalidAddress,
     TokenNotCreated,
     TokenAlreadyCreated,
-    InvalidTokenSource
+    InvalidTokenSource,
+    RescueNotAvailable
 } from "./errors/LaunchErrors.sol";
 
 /// @title LaunchOrchestrator
@@ -52,7 +54,9 @@ contract LaunchOrchestrator is ILaunchOrchestrator, ReentrancyGuard {
     uint64 public immutable auctionStartBlock;
     uint64 public immutable auctionEndBlockConfig;
     uint64 public immutable claimBlock;
+    uint256 public immutable auctionTickSpacing;
     uint256 public immutable reservePrice;
+    uint128 public immutable requiredCurrencyRaised;
     address public immutable validationHook;
 
     // Token allocation
@@ -147,7 +151,9 @@ contract LaunchOrchestrator is ILaunchOrchestrator, ReentrancyGuard {
         auctionStartBlock = params.auctionConfig.startBlock;
         auctionEndBlockConfig = params.auctionConfig.endBlock;
         claimBlock = params.auctionConfig.claimBlock;
+        auctionTickSpacing = params.auctionConfig.auctionTickSpacing;
         reservePrice = params.auctionConfig.reservePrice;
+        requiredCurrencyRaised = params.auctionConfig.requiredCurrencyRaised;
         validationHook = params.auctionConfig.validationHook;
         auctionStepsData = params.auctionConfig.auctionStepsData;
 
@@ -208,17 +214,21 @@ contract LaunchOrchestrator is ILaunchOrchestrator, ReentrancyGuard {
         // Resolve token source
         _resolveTokenSource(totalTokenAmount);
 
-        // Deploy CCA via adapter
+        // Deploy CCA via adapter — use Uniswap's AuctionParameters struct for type-safe encoding
         bytes memory configData = abi.encode(
-            paymentToken,
-            address(this), // tokensRecipient (unsold tokens return here)
-            address(this), // fundsRecipient (raised funds come here)
-            auctionStartBlock,
-            auctionEndBlockConfig,
-            claimBlock,
-            reservePrice,
-            validationHook,
-            auctionStepsData
+            AuctionParameters({
+                currency: paymentToken,
+                tokensRecipient: address(this),
+                fundsRecipient: address(this),
+                startBlock: auctionStartBlock,
+                endBlock: auctionEndBlockConfig,
+                claimBlock: claimBlock,
+                tickSpacing: auctionTickSpacing,
+                validationHook: validationHook,
+                floorPrice: reservePrice,
+                requiredCurrencyRaised: requiredCurrencyRaised,
+                auctionStepsData: auctionStepsData
+            })
         );
 
         // Approve adapter to pull auction tokens via transferFrom
@@ -260,12 +270,13 @@ contract LaunchOrchestrator is ILaunchOrchestrator, ReentrancyGuard {
         ICCA auction = ICCA(cca);
         auction.checkpoint();
 
-        uint256 raised = auction.currencyRaised();
-
-        if (raised == 0) {
+        // Use isGraduated() instead of raised == 0.
+        // sweepCurrency() requires graduation; a non-graduated auction with some bids
+        // would revert if we only checked raised == 0.
+        if (!auction.isGraduated()) {
             state = LaunchState.AUCTION_FAILED;
 
-            // Return tokens to treasury via CCA sweep
+            // Non-graduated: all tokens are returned (bidders get refunded via exitBid)
             try auction.sweepUnsoldTokens() {} catch {}
 
             // Return any remaining tokens held by orchestrator
@@ -274,19 +285,19 @@ contract LaunchOrchestrator is ILaunchOrchestrator, ReentrancyGuard {
                 IERC20(token).safeTransfer(treasuryAddress, balance);
             }
 
-            emit AuctionFailed(launchId, "Zero bids");
+            emit AuctionFailed(launchId, "Auction did not graduate");
             return;
         }
 
-        // Sweep funds and unsold tokens from CCA to orchestrator
+        // Graduated auction — sweep funds and unsold tokens from CCA
         auction.sweepCurrency();
         auction.sweepUnsoldTokens();
 
-        totalRaised = raised;
+        totalRaised = auction.currencyRaised();
 
-        // Calculate tokens sold
-        uint256 remainingTokens = IERC20(token).balanceOf(address(this));
-        tokensSold = (auctionTokenAmount + liquidityTokenAmount) - remainingTokens;
+        // Use CCA's totalCleared() directly — computed from auction state,
+        // independent of whether bidders have claimed their tokens
+        tokensSold = auction.totalCleared();
 
         state = LaunchState.AUCTION_ENDED;
 
@@ -415,6 +426,45 @@ contract LaunchOrchestrator is ILaunchOrchestrator, ReentrancyGuard {
             CurrencyLib.safeTransfer(paymentToken, treasuryAddress, balance);
             emit PaymentTokenSwept(paymentToken, balance);
         }
+    }
+
+    // ============================================
+    // EMERGENCY RESCUE
+    // ============================================
+
+    /// @inheritdoc ILaunchOrchestrator
+    function emergencyRescue(address tokenAddress) external onlyOperator nonReentrant {
+        // Terminal states: immediate rescue allowed
+        // Non-terminal states: require safety delay (2x permissionless delay after auction end)
+        if (
+            state != LaunchState.CANCELLED && state != LaunchState.AUCTION_FAILED
+                && state != LaunchState.DISTRIBUTED
+        ) {
+            // For SETUP, FINALIZED, AUCTION_ENDED: require delay
+            uint256 rescueBlock =
+                uint256(auctionEndBlockConfig) + uint256(permissionlessDistributionDelay) * 2;
+            if (block.number < rescueBlock) {
+                revert RescueNotAvailable(block.number, rescueBlock);
+            }
+        }
+
+        uint256 amount;
+        if (tokenAddress == address(0)) {
+            // Rescue native ETH
+            amount = address(this).balance;
+            if (amount > 0) {
+                (bool ok,) = treasuryAddress.call{value: amount}("");
+                require(ok, "ETH transfer failed");
+            }
+        } else {
+            // Rescue ERC20
+            amount = IERC20(tokenAddress).balanceOf(address(this));
+            if (amount > 0) {
+                IERC20(tokenAddress).safeTransfer(treasuryAddress, amount);
+            }
+        }
+
+        emit EmergencyRescue(tokenAddress, treasuryAddress, amount);
     }
 
     // ============================================

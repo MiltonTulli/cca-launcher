@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IAuctionInitializer} from "../../src/interfaces/IAuctionInitializer.sol";
+import {AuctionParameters} from "@uniswap/cca/interfaces/IContinuousClearingAuction.sol";
 import {MockCCA} from "./MockCCA.sol";
 
 /// @notice Mock CCA factory that deploys MockCCA instances
@@ -44,14 +45,14 @@ contract MockCCAFactory is IAuctionInitializer {
         if (presetCCA != address(0)) {
             cca = presetCCA;
         } else {
-            // Decode currency and fundsRecipient from configData
-            (address currency, address tokensRecipient, address fundsRecipient,, uint64 endBlock_,,,,) =
-                abi.decode(configData, (address, address, address, uint64, uint64, uint64, uint256, address, bytes));
-            cca = address(new MockCCA(token, currency, tokensRecipient, fundsRecipient, endBlock_));
+            // Decode using Uniswap's AuctionParameters struct (matches real CCA factory)
+            AuctionParameters memory params = abi.decode(configData, (AuctionParameters));
+            cca = address(new MockCCA(token, params.currency, params.tokensRecipient, params.fundsRecipient, params.endBlock));
         }
 
-        // Forward tokens to the CCA (mirrors real factory behavior)
+        // Forward tokens to the CCA and notify (mirrors real CCAAdapter behavior)
         IERC20(token).safeTransfer(cca, amount);
+        MockCCA(payable(cca)).onTokensReceived();
 
         lastDeployedCCA = cca;
     }

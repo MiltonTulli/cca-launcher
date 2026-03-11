@@ -19,6 +19,7 @@ contract MockCCA is ICCA {
 
     uint256 private _tokensSold; // simulates totalCleared in real CCA
 
+    bool public tokensReceived;
     bool public checkpointCalled;
     bool public sweepUnsoldTokensCalled;
     bool public sweepCurrencyCalled;
@@ -107,6 +108,14 @@ contract MockCCA is ICCA {
 
     function fundsRecipient() external view override returns (address) {
         return _fundsRecipient;
+    }
+
+    function totalCleared() external view override returns (uint256) {
+        return _tokensSold;
+    }
+
+    function onTokensReceived() external {
+        tokensReceived = true;
     }
 
     function checkpoint() external override {

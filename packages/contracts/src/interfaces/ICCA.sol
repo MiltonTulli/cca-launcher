@@ -34,6 +34,9 @@ interface ICCA {
     /// @notice Recipient of raised funds
     function fundsRecipient() external view returns (address);
 
+    /// @notice Total tokens sold/allocated (from auction state, independent of claims)
+    function totalCleared() external view returns (uint256);
+
     /// @notice Advance the auction state / finalize clearing price
     function checkpoint() external;
 

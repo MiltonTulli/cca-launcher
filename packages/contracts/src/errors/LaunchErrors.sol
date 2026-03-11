@@ -63,3 +63,6 @@ error InvalidTokenSource();
 
 /// @notice Already initialized (for clone pattern)
 error AlreadyInitialized();
+
+/// @notice Emergency rescue not yet available (must wait for delay)
+error RescueNotAvailable(uint256 currentBlock, uint256 availableBlock);

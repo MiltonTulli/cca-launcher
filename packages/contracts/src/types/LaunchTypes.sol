@@ -53,7 +53,9 @@ struct AuctionConfig {
     uint64 startBlock;
     uint64 endBlock;
     uint64 claimBlock;
-    uint256 reservePrice;
+    uint256 auctionTickSpacing; // CCA price increment granularity (uint256, distinct from LP tickSpacing)
+    uint256 reservePrice; // maps to CCA floorPrice
+    uint128 requiredCurrencyRaised; // CCA graduation threshold (0 = no threshold)
     bytes auctionStepsData;
     address validationHook;
 }

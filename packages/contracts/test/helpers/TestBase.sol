@@ -98,7 +98,9 @@ abstract contract TestBase is Test {
                 startBlock: uint64(block.number + 10),
                 endBlock: uint64(block.number + 110),
                 claimBlock: uint64(block.number + 110),
+                auctionTickSpacing: 1, // minimum tick spacing
                 reservePrice: RESERVE_PRICE,
+                requiredCurrencyRaised: 0, // no graduation threshold
                 auctionStepsData: "",
                 validationHook: address(0)
             }),
@@ -141,6 +143,7 @@ abstract contract TestBase is Test {
         MockCCA(payable(cca)).setCurrencyRaised(raisedAmount);
         MockCCA(payable(cca)).setClearingPrice(clearingPrice_);
         MockCCA(payable(cca)).setTokensSold(tokensSold_);
+        MockCCA(payable(cca)).setGraduated(true);
         // Fund the CCA with payment tokens to simulate actual raises
         paymentToken.mint(cca, raisedAmount);
     }
