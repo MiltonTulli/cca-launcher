@@ -29,6 +29,10 @@ export const postAuctionHandlerAbi = [
     "stateMutability": "nonpayable"
   },
   {
+    "type": "receive",
+    "stateMutability": "payable"
+  },
+  {
     "type": "function",
     "name": "createLiquidityPosition",
     "inputs": [
@@ -117,7 +121,7 @@ export const postAuctionHandlerAbi = [
         "internalType": "uint256"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "payable"
   },
   {
     "type": "function",
@@ -260,6 +264,11 @@ export const postAuctionHandlerAbi = [
       }
     ],
     "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "ETHTransferFailed",
+    "inputs": []
   },
   {
     "type": "error",

@@ -204,6 +204,10 @@ export const launchOrchestratorAbi = [
     "stateMutability": "nonpayable"
   },
   {
+    "type": "receive",
+    "stateMutability": "payable"
+  },
+  {
     "type": "function",
     "name": "acceptOperator",
     "inputs": [],
@@ -1121,6 +1125,11 @@ export const launchOrchestratorAbi = [
         "internalType": "uint256"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "ETHTransferFailed",
+    "inputs": []
   },
   {
     "type": "error",
