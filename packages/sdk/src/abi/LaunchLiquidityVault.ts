@@ -49,6 +49,10 @@ export const launchLiquidityVaultAbi = [
     "stateMutability": "nonpayable"
   },
   {
+    "type": "receive",
+    "stateMutability": "payable"
+  },
+  {
     "type": "function",
     "name": "collectAndSplitFees",
     "inputs": [],
@@ -326,6 +330,11 @@ export const launchLiquidityVaultAbi = [
       }
     ],
     "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "ETHTransferFailed",
+    "inputs": []
   },
   {
     "type": "error",
