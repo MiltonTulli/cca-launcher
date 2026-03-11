@@ -3,11 +3,11 @@
 
 /** Sepolia (chainId: 11155111) deployed contract addresses */
 export const sepoliaAddresses = {
-  TokenFactory: "0x2a70126e83b75a049f15ab68d39bc9a6ab46d0a2",
-  LiquidityLockup: "0x12113aa7a499feedc157745342e7ff43ff951100",
-  LiquidityLockupFactory: "0x999debc44750791b95976fa638333d3572ac518a",
-  PostAuctionHandler: "0x6fd2e2c2064520b1afe6dfcac23fbf92de57ece2",
-  CCAAdapter: "0x2dfebd10b81498f99b98ee7a566d5b3e30f43665",
-  OrchestratorDeployer: "0x3213847c110e2c3ff962a5198f183558afb5b156",
-  LaunchFactory: "0x1421a850681b40c82a0efbddaa686ed08f3921c5",
+  TokenFactory: "0x4149c11c5f8386c425ad5f12eaaa08c90f69f274",
+  LiquidityLockup: "0x32d44b17ab06f53a08dd9bb1903ce5b08ad8cab3",
+  LiquidityLockupFactory: "0x086b0e07248403dfb167882505a5a1ce1e9874b7",
+  PostAuctionHandler: "0xa443593036f9fed1f0881ad32fe2a5868e1bfec0",
+  CCAAdapter: "0xf9f35a0372f6850143c4ec9f84efad368e473e01",
+  OrchestratorDeployer: "0x90b36f64c6d646742910f525b91847a3d6092f2a",
+  LaunchFactory: "0x484c60c320b656c28fc997c5a930b30da8c39319",
 } as const;
