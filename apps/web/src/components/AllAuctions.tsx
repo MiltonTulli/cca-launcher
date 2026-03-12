@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CHAIN_METADATA } from "@/config/chains";
+import { HIDDEN_AUCTIONS } from "@/config/constants";
 import type { AuctionEntry } from "@/config/types";
 import { useAuctions } from "@/hooks/useAuctions";
 import { useCommunityAuctions } from "@/hooks/useCommunityAuctions";
@@ -77,7 +78,12 @@ export function AllAuctions() {
   const [page, setPage] = useState(0);
 
   const isLoading = isLoadingFactory || isLoadingStandalone || isLoadingCommunity;
-  const auctions = [...factoryAuctions, ...standaloneAuctions];
+  const auctions = [...factoryAuctions, ...standaloneAuctions].filter(
+    (a) =>
+      !HIDDEN_AUCTIONS.some(
+        (h) => h.toLowerCase() === a.ccaAddress.toLowerCase()
+      )
+  );
   const sorted = [...auctions].reverse();
   const totalPages = Math.max(1, Math.ceil(sorted.length / ROWS_PER_PAGE));
   const start = page * ROWS_PER_PAGE;

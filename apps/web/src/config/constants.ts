@@ -47,3 +47,10 @@ export const DEFAULT_BLOCK_TIME = 12;
 // Q96 FIXED-POINT CONSTANT (2^96)
 // ============================================
 export const Q96 = BigInt("79228162514264337593543950336"); // 2^96
+
+// ============================================
+// HIDDEN AUCTIONS (excluded from /auctions list)
+// ============================================
+export const HIDDEN_AUCTIONS: string[] = [
+  "0xdc389c151374972aFEA09996A8Cff488DD4a2119",
+];
