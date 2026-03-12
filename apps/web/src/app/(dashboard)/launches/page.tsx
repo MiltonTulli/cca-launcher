@@ -1,13 +1,7 @@
 "use client";
 
-import { AllLaunches } from "@/components/AllLaunches";
-import { FactoryBanner } from "@/components/FactoryBanner";
+import { LaunchListPage } from "@/features/launcher/pages";
 
 export default function LaunchesPage() {
-  return (
-    <div className="space-y-4">
-      <FactoryBanner />
-      <AllLaunches />
-    </div>
-  );
+  return <LaunchListPage />;
 }

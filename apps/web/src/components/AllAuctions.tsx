@@ -1,9 +1,12 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ExternalLink, RefreshCw, ShoppingCart } from "lucide-react";
+import { useAppKit } from "@reown/appkit/react";
+import { ArrowRight, ChevronLeft, ChevronRight, ExternalLink, Plus, RefreshCw, ShoppingCart, Wallet } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatUnits } from "viem";
+import { useAccount } from "wagmi";
 import { SubmitAuctionForm } from "@/components/SubmitAuctionForm";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -60,6 +63,8 @@ function StatusBadge({ auction }: { auction: AuctionEntry }) {
 }
 
 export function AllAuctions() {
+  const { isConnected } = useAccount();
+  const { open } = useAppKit();
   const { auctions: factoryAuctions, isLoading: isLoadingFactory, refetch } = useAuctions();
   const {
     addresses: communityAddresses,
@@ -117,6 +122,43 @@ export function AllAuctions() {
           Refresh
         </Button>
       </div>
+
+      {/* Launch CTA */}
+      {isConnected ? (
+        <Link href="/launches/create" className="block">
+          <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 p-5 hover:bg-primary/10 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                <Plus className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold">Launch your own token</p>
+                <p className="text-sm text-muted-foreground">Deploy with a fair CCA auction and automated Uniswap V4 liquidity</p>
+              </div>
+            </div>
+            <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+          </div>
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={() => open({ view: "Connect" })}
+          className="w-full text-left"
+        >
+          <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 p-5 hover:bg-primary/10 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                <Wallet className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold">Connect wallet to launch your token</p>
+                <p className="text-sm text-muted-foreground">Deploy with a fair CCA auction and automated Uniswap V4 liquidity</p>
+              </div>
+            </div>
+            <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+          </div>
+        </button>
+      )}
 
       <SubmitAuctionForm onSuccess={refetchCommunity} />
 
@@ -209,30 +251,32 @@ export function AllAuctions() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-2.5 border-t border-border">
-            <span className="text-xs text-muted-foreground">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+            <span className="text-sm text-muted-foreground">
               {start + 1}–{Math.min(start + ROWS_PER_PAGE, sorted.length)} of {sorted.length}
             </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none"
               >
                 <ChevronLeft className="h-4 w-4" />
-              </button>
-              <span className="text-xs text-muted-foreground px-2">
+              </Button>
+              <span className="text-sm text-muted-foreground px-2 tabular-nums">
                 {page + 1} / {totalPages}
               </span>
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
-                className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:bg-muted disabled:opacity-30 disabled:pointer-events-none"
               >
                 <ChevronRight className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
           </div>
         )}

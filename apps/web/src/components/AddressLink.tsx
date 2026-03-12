@@ -3,12 +3,13 @@ import { getExplorerUrl, shortenAddress } from "@/lib/utils";
 
 interface AddressLinkProps {
   address: string;
-  chainId: number;
+  chainId?: number;
   type?: "address" | "tx";
+  label?: string;
   className?: string;
 }
 
-export function AddressLink({ address, chainId, type = "address", className }: AddressLinkProps) {
+export function AddressLink({ address, chainId = 1, type = "address", label, className }: AddressLinkProps) {
   return (
     <a
       href={getExplorerUrl(chainId, type, address)}
@@ -19,7 +20,7 @@ export function AddressLink({ address, chainId, type = "address", className }: A
         "flex items-center gap-1 font-mono text-xs text-primary hover:underline truncate"
       }
     >
-      {shortenAddress(address)}
+      {label ?? shortenAddress(address)}
       <ExternalLink className="h-3 w-3 shrink-0" />
     </a>
   );

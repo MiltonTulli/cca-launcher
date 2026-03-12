@@ -4,10 +4,6 @@ export { sepoliaAddresses } from "./sepolia";
 
 import { sepoliaAddresses } from "./sepolia";
 
-export { localhostAddresses } from "./localhost";
-export { baseSepoliaAddresses } from "./baseSepolia";
-export { sepoliaAddresses } from "./sepolia";
-
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as const;
 
 /**

@@ -65,7 +65,7 @@ export function useStandaloneAuctions(extraAddresses?: { address: Address; chain
 
   const { data: ccaResults, isLoading: isLoadingCCA } = useReadContracts({
     contracts: ccaContracts,
-    query: { enabled: ccaContracts.length > 0, staleTime: 30_000 },
+    query: { enabled: ccaContracts.length > 0, staleTime: 120_000 },
   });
 
   // Step 2: Parse base auction data
@@ -131,7 +131,7 @@ export function useStandaloneAuctions(extraAddresses?: { address: Address; chain
 
   const { data: metaResults, isLoading: isLoadingMeta } = useReadContracts({
     contracts: metaContracts,
-    query: { enabled: metaContracts.length > 0, staleTime: 60_000 },
+    query: { enabled: metaContracts.length > 0, staleTime: 300_000 },
   });
 
   const metaMap = useMemo(() => {

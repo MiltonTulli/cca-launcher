@@ -2,10 +2,8 @@
 
 import {
   AlertCircle,
-  ArrowLeft,
   Clock,
   Eye,
-  FileText,
   Globe,
   Pencil,
   RefreshCw,
@@ -13,30 +11,53 @@ import {
   User,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId, useBlockNumber, useBlock } from "wagmi";
+import { useRouter } from "next/navigation";
+import type { Address } from "viem";
+import { toast } from "sonner";
 import { CommentsSection } from "@/components/CommentsSection";
-import { LaunchForm } from "@/components/launch-form";
 import { ShareBar } from "@/components/ShareBar";
-import { SummaryRow } from "@/components/SummaryRow";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { WalletButton } from "@/components/WalletButton";
-import { type LaunchFormValues, POOL_FEE_TIERS, TOKEN_SOURCE_OPTIONS } from "@/config/contracts";
 import { type Draft, getDraft } from "@/lib/drafts";
-import { shortenAddress, ZERO_ADDRESS } from "@/lib/utils";
+import { shortenAddress } from "@/lib/utils";
+import { parseTxError } from "@/lib/txError";
+import { TokenSource, POOL_FEE_TIERS } from "@launcher/sdk";
+import { TOKEN_SOURCE_OPTIONS } from "@/features/launcher/utils/displayState";
+import { toLaunchParams, type LaunchFormValues } from "@/features/launcher/utils/toLaunchParams";
+import { useCreateLaunch } from "@/features/launcher/hooks/useCreateLaunch";
+import { useTokenMetadata } from "@/features/launcher/hooks/useTokenMetadata";
 
 interface DraftViewProps {
   id: string;
 }
 
+function Row({ label, value }: { label: string; value?: string }) {
+  if (!value) return null;
+  return (
+    <div className="flex justify-between text-sm py-1">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-right max-w-[60%] truncate">{value}</span>
+    </div>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <h4 className="text-sm font-semibold">{children}</h4>;
+}
+
 export function DraftView({ id }: DraftViewProps) {
   const { address } = useAccount();
+  const chainId = useChainId();
+  const router = useRouter();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+
+  const { data: blockNumber } = useBlockNumber({ chainId });
+  const { data: block } = useBlock({ chainId });
+  const { createLaunch, isPending, isConfirming, isSuccess, launchAddress } = useCreateLaunch(chainId);
 
   const fetchDraft = useCallback(async () => {
     setIsLoading(true);
@@ -56,15 +77,54 @@ export function DraftView({ id }: DraftViewProps) {
   }, [fetchDraft]);
 
   const isOwner = draft?.owner ? address?.toLowerCase() === draft.owner.toLowerCase() : false;
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/drafts/${id}` : "";
 
-  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/draft/${id}` : "";
+  const fv = (draft?.formValues ?? {}) as unknown as Partial<LaunchFormValues>;
 
-  const handleDraftSaved = useCallback(() => {
-    setIsEditing(false);
-    fetchDraft();
-  }, [fetchDraft]);
+  const isPaymentTokenNative =
+    !fv.paymentToken || fv.paymentToken === "0x0000000000000000000000000000000000000000";
+  const paymentTokenMeta = useTokenMetadata(
+    isPaymentTokenNative ? undefined : (fv.paymentToken as Address),
+    chainId,
+  );
+  const paymentTokenDecimals = isPaymentTokenNative ? 18 : (paymentTokenMeta.decimals ?? 18);
+  const paymentTokenSymbol = isPaymentTokenNative ? "ETH" : (paymentTokenMeta.symbol ?? "ERC20");
 
-  // Loading
+  const handleEdit = useCallback(() => {
+    try {
+      sessionStorage.setItem("launch-wizard-draft", JSON.stringify(draft?.formValues));
+      sessionStorage.setItem("launch-wizard-draft-id", id);
+    } catch {}
+    router.push("/launches/create");
+  }, [draft, id, router]);
+
+  const handleLaunch = useCallback(async () => {
+    if (!draft || !blockNumber || !block) return;
+    try {
+      const values: LaunchFormValues = {
+        ...(draft.formValues as unknown as LaunchFormValues),
+        tokenDecimals: "18",
+        paymentTokenDecimals: String(paymentTokenDecimals),
+      };
+      const params = toLaunchParams(values, {
+        currentBlock: blockNumber,
+        currentTimestamp: Number(block.timestamp),
+        chainId,
+      });
+      await createLaunch(params);
+    } catch (err) {
+      const { title, description } = parseTxError(err);
+      toast.error(title, { description });
+    }
+  }, [draft, blockNumber, block, paymentTokenDecimals, chainId, createLaunch]);
+
+  useEffect(() => {
+    if (isSuccess && launchAddress) {
+      toast.success("Launch created!", { description: "Redirecting to your launch page..." });
+      router.push(`/launches/${launchAddress}?chain=${chainId}`);
+    }
+  }, [isSuccess, launchAddress, router, chainId]);
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -74,7 +134,6 @@ export function DraftView({ id }: DraftViewProps) {
     );
   }
 
-  // Error
   if (error || !draft) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -94,213 +153,168 @@ export function DraftView({ id }: DraftViewProps) {
     );
   }
 
-  const fv = draft.formValues as unknown as Partial<LaunchFormValues>;
-
   const tokenSourceLabel =
-    TOKEN_SOURCE_OPTIONS.find((o) => o.value.toString() === fv.tokenSource)?.label ??
-    fv.tokenSource;
+    TOKEN_SOURCE_OPTIONS.find((o) => String(o.value) === fv.tokenSource)?.label ?? fv.tokenSource;
+  const isCreateNew = fv.tokenSource === String(TokenSource.CREATE_NEW);
   const feeTierLabel =
-    POOL_FEE_TIERS.find((t) => t.value.toString() === fv.poolFeeTier)?.label ?? fv.poolFeeTier;
+    POOL_FEE_TIERS.find((t) => String(t.value) === fv.poolFeeTier)?.label ?? fv.poolFeeTier;
+  const isLaunching = isPending || isConfirming;
 
-  const auctionDuration = (() => {
-    const d = parseInt(fv.auctionDurationDays || "0", 10);
-    const h = parseInt(fv.auctionDurationHours || "0", 10);
-    const parts = [];
-    if (d > 0) parts.push(`${d}d`);
-    if (h > 0) parts.push(`${h}h`);
-    return parts.length > 0 ? parts.join(" ") : "\u2014";
-  })();
-
-  // ============================================
-  // Edit mode -> show full LaunchForm
-  // ============================================
-  if (isEditing) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
-            <ArrowLeft className="h-4 w-4" />
-            Back to summary
-          </Button>
-        </div>
-        <LaunchForm initialValues={fv} mode="draft" draftId={id} onDraftSaved={handleDraftSaved} />
-      </div>
-    );
-  }
-
-  // ============================================
-  // Summary mode (default)
-  // ============================================
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      {/* Draft Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-              <FileText className="h-5 w-5 text-blue-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-xl">Launch Draft</CardTitle>
-              <CardDescription className="font-mono text-xs mt-1 truncate">{id}</CardDescription>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {!isOwner && address && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-                  <Eye className="h-3 w-3" />
-                  View Only
-                </span>
-              )}
-              <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-                Draft
-              </span>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4 text-sm">
-            {draft.createdAt && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" />
-                {new Date(draft.createdAt).toLocaleString()}
-              </div>
-            )}
-            {draft.owner && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <User className="h-3.5 w-3.5" />
-                <span className="font-mono text-xs">{shortenAddress(draft.owner)}</span>
-              </div>
-            )}
-            {draft.chainId && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Globe className="h-3.5 w-3.5" />
-                Chain {draft.chainId}
-              </div>
-            )}
-            {draft.updatedAt && draft.updatedAt !== draft.createdAt && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <RefreshCw className="h-3.5 w-3.5" />
-                Updated {new Date(draft.updatedAt).toLocaleString()}
-              </div>
-            )}
-          </div>
+    <div className="max-w-2xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-2xl font-bold">Launch Draft</h1>
+        <div className="flex items-center gap-2">
+          {!isOwner && address && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+              <Eye className="h-3 w-3" />
+              View Only
+            </span>
+          )}
+          <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">
+            Draft
+          </span>
+        </div>
+      </div>
 
-          <div className="mt-4">
-            <ShareBar url={shareUrl} text="Check out this token launch draft on Tally Launch" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Parameters Summary */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Token Configuration</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-2 text-sm">
-            <SummaryRow label="Token" value={fv.token} mono />
-            <SummaryRow label="Payment Token" value={fv.paymentToken} mono />
-            <SummaryRow label="Token Amount" value={fv.tokenAmount} />
-            <SummaryRow label="Token Source" value={tokenSourceLabel} />
-            <SummaryRow label="Token Decimals" value={fv.tokenDecimals} />
-            <SummaryRow label="Payment Decimals" value={fv.paymentTokenDecimals} />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Operators &amp; Beneficiaries</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-2 text-sm">
-            <SummaryRow label="Operator" value={fv.operator} mono />
-            <SummaryRow label="Treasury" value={fv.treasury} mono />
-            <SummaryRow label="Position Beneficiary" value={fv.positionBeneficiary} mono />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Auction Parameters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-2 text-sm">
-            <SummaryRow label="Duration" value={auctionDuration} />
-            <SummaryRow label="Pricing Steps" value={fv.pricingSteps} />
-            <SummaryRow label="Reserve Price" value={fv.reservePrice} />
-            <SummaryRow
-              label="Start Time"
-              value={fv.startTime === "0" ? "Immediate" : fv.startTime}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Allocation &amp; Pool</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-2 text-sm">
-            <SummaryRow
-              label="Liquidity"
-              value={
-                fv.liquidityAllocationPercent ? `${fv.liquidityAllocationPercent}%` : undefined
-              }
-            />
-            <SummaryRow
-              label="Treasury"
-              value={fv.treasuryAllocationPercent ? `${fv.treasuryAllocationPercent}%` : undefined}
-            />
-            <SummaryRow label="Pool Fee Tier" value={feeTierLabel} />
-            <SummaryRow label="Tick Spacing" value={fv.tickSpacing} />
-            <SummaryRow
-              label="Lockup Duration"
-              value={fv.lockupDurationDays ? `${fv.lockupDurationDays} days` : undefined}
-            />
-            <SummaryRow
-              label="Distribution Delay"
-              value={fv.distributionDelayDays ? `${fv.distributionDelayDays} days` : undefined}
-            />
-            {fv.validationHook && fv.validationHook !== ZERO_ADDRESS && (
-              <SummaryRow label="Validation Hook" value={fv.validationHook} mono />
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Separator />
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        {isOwner && (
-          <Button
-            variant="outline"
-            className="flex-1 h-12 text-base"
-            size="lg"
-            onClick={() => setIsEditing(true)}
-          >
-            <Pencil className="h-5 w-5" />
-            Edit
-          </Button>
+      {/* Meta info */}
+      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mb-6">
+        <span className="font-mono">{id}</span>
+        {draft.owner && (
+          <span className="flex items-center gap-1">
+            <User className="h-3 w-3" />
+            {shortenAddress(draft.owner)}
+          </span>
         )}
-        {!address ? (
-          <div className="flex-1 flex flex-col items-center gap-2">
-            <WalletButton />
-            <p className="text-xs text-muted-foreground">Connect to launch</p>
-          </div>
-        ) : (
-          <Button className="flex-1 h-12 text-base" size="lg" onClick={() => setIsEditing(true)}>
-            <Rocket className="h-5 w-5" />
-            Launch
-          </Button>
+        {draft.chainId && (
+          <span className="flex items-center gap-1">
+            <Globe className="h-3 w-3" />
+            Chain {draft.chainId}
+          </span>
+        )}
+        {draft.createdAt && (
+          <span className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {new Date(draft.createdAt).toLocaleDateString()}
+          </span>
         )}
       </div>
 
-      {/* Comments */}
-      <CommentsSection resourceType="draft" resourceId={id} />
+      {/* Configuration — compact review-style layout */}
+      <div className="rounded-lg border px-6 py-8 sm:px-8 space-y-6">
+        {/* Token */}
+        <div className="rounded-lg border p-4 space-y-1">
+          <SectionTitle>Token Setup</SectionTitle>
+          <Row label="Source" value={tokenSourceLabel} />
+          {!isCreateNew && <Row label="Token" value={fv.token ? shortenAddress(fv.token) : undefined} />}
+          <Row label="Total Amount" value={fv.totalTokenAmount} />
+        </div>
+
+        {/* Core */}
+        <div className="rounded-lg border p-4 space-y-1">
+          <SectionTitle>Core Settings</SectionTitle>
+          <Row
+            label="Payment Token"
+            value={isPaymentTokenNative ? "Native ETH" : `${paymentTokenSymbol} (${shortenAddress(fv.paymentToken)})`}
+          />
+          <Row label="Operator" value={fv.operator ? shortenAddress(fv.operator) : undefined} />
+          <Row label="Treasury" value={fv.treasury ? shortenAddress(fv.treasury) : undefined} />
+        </div>
+
+        {/* Auction */}
+        <div className="rounded-lg border p-4 space-y-1">
+          <SectionTitle>Auction Rules</SectionTitle>
+          <Row label="Start" value={fv.auctionStart ? new Date(fv.auctionStart).toLocaleString() : undefined} />
+          <Row label="End" value={fv.auctionEnd ? new Date(fv.auctionEnd).toLocaleString() : undefined} />
+          <Row label="Claim Delay" value={fv.claimDelay ? `${fv.claimDelay} min` : undefined} />
+          <Row
+            label="Floor Price"
+            value={fv.reservePrice ? `${fv.reservePrice} ${paymentTokenSymbol}` : undefined}
+          />
+          <Row
+            label="Required Raised"
+            value={
+              fv.requiredCurrencyRaised === "0"
+                ? "No threshold"
+                : fv.requiredCurrencyRaised
+                  ? `${fv.requiredCurrencyRaised} ${paymentTokenSymbol}`
+                  : undefined
+            }
+          />
+        </div>
+
+        {/* Liquidity */}
+        <div className="rounded-lg border p-4 space-y-1">
+          <SectionTitle>Liquidity Setup</SectionTitle>
+          {fv.liquidityEnabled ? (
+            <>
+              <Row label="Enabled" value="Yes" />
+              <Row label="Token to LP" value={fv.liquidityPercent ? `${fv.liquidityPercent}%` : undefined} />
+              <Row
+                label="Proceeds to LP"
+                value={fv.proceedsToLiquidityPercent ? `${fv.proceedsToLiquidityPercent}%` : undefined}
+              />
+              <Row label="Pool Fee" value={feeTierLabel} />
+              <Row label="Lockup" value={fv.lockupEnabled ? `${fv.lockupDurationDays} days` : "None"} />
+            </>
+          ) : (
+            <Row label="Enabled" value="No" />
+          )}
+        </div>
+
+        {/* Settlement */}
+        <div className="rounded-lg border p-4 space-y-1">
+          <SectionTitle>Settlement</SectionTitle>
+          <Row
+            label="Distribution Delay"
+            value={fv.distributionDelayBlocks ? `${fv.distributionDelayBlocks} blocks` : undefined}
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="pt-2 flex gap-3">
+          {isOwner && (
+            <Button variant="outline" className="flex-1" onClick={handleEdit} disabled={isLaunching}>
+              <Pencil className="h-4 w-4" />
+              Edit
+            </Button>
+          )}
+          {!address ? (
+            <div className="flex-1 flex flex-col items-center gap-2">
+              <WalletButton />
+              <p className="text-xs text-muted-foreground">Connect to launch</p>
+            </div>
+          ) : (
+            <Button className="flex-1" onClick={handleLaunch} disabled={isLaunching || !blockNumber}>
+              {isPending ? (
+                <>
+                  <Spinner size="sm" />
+                  Confirm in wallet...
+                </>
+              ) : isConfirming ? (
+                <>
+                  <Spinner size="sm" />
+                  Confirming...
+                </>
+              ) : (
+                <>
+                  <Rocket className="h-4 w-4" />
+                  Launch
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Share + Comments */}
+      <div className="mt-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <ShareBar url={shareUrl} text="Check out this token launch draft on Tally Launch" />
+        </div>
+        <CommentsSection resourceType="draft" resourceId={id} />
+      </div>
     </div>
   );
 }

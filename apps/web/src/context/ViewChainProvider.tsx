@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { createContext, useContext, useState } from "react";
-import { SUPPORTED_CHAIN_IDS } from "@/config/addresses";
+import { DEPLOYED_CHAIN_IDS } from "@launcher/sdk";
 
 interface ViewChainContextValue {
   viewChainId: number;
@@ -17,14 +17,14 @@ const DEFAULT_CHAIN_ID = 11155111;
 
 export function ViewChainProvider({ children }: { children: React.ReactNode }) {
   const [viewChainId, setViewChainId] = useState(
-    SUPPORTED_CHAIN_IDS.includes(DEFAULT_CHAIN_ID)
+    DEPLOYED_CHAIN_IDS.includes(DEFAULT_CHAIN_ID)
       ? DEFAULT_CHAIN_ID
-      : (SUPPORTED_CHAIN_IDS[0] ?? DEFAULT_CHAIN_ID),
+      : (DEPLOYED_CHAIN_IDS[0] ?? DEFAULT_CHAIN_ID),
   );
 
   return (
     <ViewChainContext.Provider
-      value={{ viewChainId, setViewChainId, supportedChainIds: SUPPORTED_CHAIN_IDS }}
+      value={{ viewChainId, setViewChainId, supportedChainIds: DEPLOYED_CHAIN_IDS }}
     >
       {children}
     </ViewChainContext.Provider>

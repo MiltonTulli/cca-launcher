@@ -2,23 +2,32 @@
 // TOKEN SOURCE ENUM (matches contract TokenSource)
 // ============================================
 export enum TokenSource {
-  MINT = 0,
-  TRANSFER_FROM = 1,
-  TRANSFER = 2,
+  EXISTING_BALANCE = 0,
+  EXISTING_TRANSFER_FROM = 1,
+  CREATE_NEW = 2,
 }
 
 // ============================================
 // LAUNCH STATE ENUM (matches contract LaunchState)
+// Note: AUCTION_ACTIVE is derived in UI (FINALIZED + block in range), not stored on-chain
 // ============================================
 export enum LaunchState {
   SETUP = 0,
   FINALIZED = 1,
-  AUCTION_ACTIVE = 2,
-  AUCTION_ENDED = 3,
-  AUCTION_FAILED = 4,
-  DISTRIBUTED = 5,
-  LOCKED = 6,
-  UNLOCKED = 7,
+  AUCTION_ENDED = 2,
+  DISTRIBUTED = 3,
+  CANCELLED = 4,
+  AUCTION_FAILED = 5,
+}
+
+// ============================================
+// LIQUIDITY STATE ENUM (separate from LaunchState)
+// ============================================
+export enum LiquidityState {
+  NONE = 0,
+  LOCKED = 1,
+  UNLOCKED = 2,
+  WITHDRAWN = 3,
 }
 
 // ============================================

@@ -1,26 +1,90 @@
-import type { TokenSource } from "./enums";
+import type { LiquidityState, TokenSource } from "./enums";
 
 // ============================================
-// CONTRACT-LEVEL TYPES
+// CONTRACT-LEVEL TYPES (match Solidity structs)
 // ============================================
 
-/** LaunchParams type — matches the contract struct used in createLaunch() */
+/** CCA auction parameters */
+export interface AuctionConfig {
+  startBlock: bigint;
+  endBlock: bigint;
+  claimBlock: bigint;
+  auctionTickSpacing: bigint;
+  reservePrice: bigint;
+  requiredCurrencyRaised: bigint;
+  auctionStepsData: `0x${string}`;
+  validationHook: `0x${string}`;
+}
+
+/** How tokens are split between auction and liquidity */
+export interface TokenAllocation {
+  auctionTokenAmount: bigint;
+  liquidityTokenAmount: bigint;
+}
+
+/** Liquidity bootstrap configuration */
+export interface LiquidityProvisionConfig {
+  enabled: boolean;
+  proceedsToLiquidityBps: number;
+  positionBeneficiary: `0x${string}`;
+  poolFee: number;
+  tickSpacing: number;
+  tickLower: number;
+  tickUpper: number;
+  lockupEnabled: boolean;
+  lockupDuration: bigint;
+}
+
+/** Post-auction settlement parameters */
+export interface SettlementConfig {
+  treasury: `0x${string}`;
+  permissionlessDistributionDelay: bigint;
+}
+
+/** Full launch configuration — matches LaunchFactory.createLaunch() param */
 export interface LaunchParams {
   tokenSource: TokenSource;
-  tokenAmount: bigint;
-  auctionDuration: bigint;
-  pricingSteps: bigint;
-  reservePrice: bigint;
-  startTime: bigint;
-  liquidityAllocation: bigint;
-  treasuryAllocation: bigint;
-  treasury: `0x${string}`;
-  poolFeeTier: number;
-  tickSpacing: number;
-  lockupDuration: bigint;
-  distributionDelay: bigint;
-  positionBeneficiary: `0x${string}`;
-  validationHook: `0x${string}`;
+  token: `0x${string}`;
+  paymentToken: `0x${string}`;
+  operator: `0x${string}`;
+  auctionConfig: AuctionConfig;
+  tokenAllocation: TokenAllocation;
+  liquidityConfig: LiquidityProvisionConfig;
+  settlementConfig: SettlementConfig;
+  metadataHash: `0x${string}`;
+}
+
+/** Parameters for creating a new token via TokenFactory */
+export interface TokenCreationParams {
+  name: string;
+  symbol: string;
+  decimals: number;
+  initialSupply: bigint;
+  initialHolder: `0x${string}`;
+}
+
+/** Global platform fee configuration (set on factory, snapshotted per launch) */
+export interface PlatformFeeConfig {
+  feeRecipient: `0x${string}`;
+  saleFeeBps: number;
+  lpFeeShareBps: number;
+  tokenCreationFee: bigint;
+}
+
+/** Per-vault fee split configuration */
+export interface VaultConfig {
+  platformBeneficiary: `0x${string}`;
+  creatorBeneficiary: `0x${string}`;
+  platformFeeBps: number;
+}
+
+/** Tracks liquidity position state within a launch */
+export interface LiquidityInfo {
+  state: LiquidityState;
+  vault: `0x${string}`;
+  lockup: `0x${string}`;
+  positionTokenId: bigint;
+  unlockTimestamp: bigint;
 }
 
 /** On-chain Bid struct from CCA contract */
