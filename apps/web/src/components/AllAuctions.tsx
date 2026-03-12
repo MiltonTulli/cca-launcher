@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatUnits } from "viem";
+import { q96PriceToDisplay } from "@/lib/q96";
 import { useAccount } from "wagmi";
 import { SubmitAuctionForm } from "@/components/SubmitAuctionForm";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,8 @@ import type { AuctionEntry } from "@/config/types";
 import { useAuctions } from "@/hooks/useAuctions";
 import { useCommunityAuctions } from "@/hooks/useCommunityAuctions";
 import { useStandaloneAuctions } from "@/hooks/useStandaloneAuctions";
-import { getExplorerUrl, shortenAddress } from "@/lib/utils";
+import { useTokenUsdPrice } from "@/hooks/useTokenUsdPrice";
+import { formatUsd, getExplorerUrl, shortenAddress } from "@/lib/utils";
 
 const ROWS_PER_PAGE = 20;
 
@@ -61,6 +63,24 @@ function StatusBadge({ auction }: { auction: AuctionEntry }) {
       {label}
     </span>
   );
+}
+
+function UsdAmount({
+  amount,
+  decimals,
+  tokenAddress,
+  chainId,
+}: {
+  amount: bigint;
+  decimals: number;
+  tokenAddress?: string;
+  chainId: number;
+}) {
+  const { usdPrice } = useTokenUsdPrice(tokenAddress, chainId);
+  if (!usdPrice) return null;
+  const val = parseFloat(formatUnits(amount, decimals));
+  if (val === 0) return null;
+  return <span className="text-muted-foreground ml-1">({formatUsd(val * usdPrice)})</span>;
 }
 
 export function AllAuctions() {
@@ -235,9 +255,15 @@ export function AllAuctions() {
                   <span className="text-muted-foreground ml-1">
                     {auction.currencySymbol ?? NATIVE_SYMBOL[auction.chainId] ?? "ETH"}
                   </span>
+                  <UsdAmount
+                    amount={auction.totalRaised}
+                    decimals={auction.currencyDecimals ?? 18}
+                    tokenAddress={auction.paymentToken}
+                    chainId={auction.chainId}
+                  />
                 </TableCell>
                 <TableCell className="text-right font-mono text-xs">
-                  {formatAmount(auction.currentPrice, auction.currencyDecimals ?? 18)}
+                  ~{q96PriceToDisplay(auction.currentPrice, auction.tokenDecimals ?? 18, auction.currencyDecimals ?? 18)}
                   <span className="text-muted-foreground ml-1">
                     {auction.currencySymbol ?? NATIVE_SYMBOL[auction.chainId] ?? "ETH"}
                   </span>

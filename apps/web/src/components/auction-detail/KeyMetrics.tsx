@@ -3,10 +3,19 @@
 import { formatUnits } from "viem";
 import { CCA_PHASE_COLORS, CCA_PHASE_LABELS, CCAPhase } from "@/config/contracts";
 import type { UseCCADataReturn } from "@/hooks/useCCAData";
+import { useTokenUsdPrice } from "@/hooks/useTokenUsdPrice";
 import { blocksToTimeEstimate, q96PriceToDisplay } from "@/lib/q96";
+import { formatCompactNumber, formatUsd } from "@/lib/utils";
 
 interface KeyMetricsProps {
   data: UseCCADataReturn;
+}
+
+function toUsdSubtitle(displayValue: string, usdPrice: number | null): string | null {
+  if (!usdPrice) return null;
+  const num = parseFloat(displayValue);
+  if (isNaN(num) || num === 0) return null;
+  return formatUsd(num * usdPrice);
 }
 
 export function KeyMetrics({ data }: KeyMetricsProps) {
@@ -23,8 +32,11 @@ export function KeyMetrics({ data }: KeyMetricsProps) {
     currencyDecimals,
     tokenSymbol,
     currencySymbol,
+    currencyAddress,
     chainId,
   } = data;
+
+  const { usdPrice } = useTokenUsdPrice(currencyAddress, chainId);
 
   const tDec = tokenDecimals ?? 18;
   const cDec = currencyDecimals ?? 18;
@@ -35,6 +47,15 @@ export function KeyMetrics({ data }: KeyMetricsProps) {
   const totalBlocks = end - start;
   const progressPercent =
     totalBlocks > 0 ? Math.min(100, Math.max(0, ((current - start) / totalBlocks) * 100)) : 0;
+
+  const totalRaisedDisplay =
+    currencyRaised !== undefined ? formatUnits(currencyRaised, cDec) : null;
+  const floorPriceDisplay =
+    floorPrice !== undefined ? q96PriceToDisplay(floorPrice, tDec, cDec) : null;
+  const clearingPriceDisplay =
+    clearingPrice !== undefined && phase !== CCAPhase.COMING_SOON
+      ? q96PriceToDisplay(clearingPrice, tDec, cDec)
+      : null;
 
   return (
     <div className="space-y-4">
@@ -77,40 +98,43 @@ export function KeyMetrics({ data }: KeyMetricsProps) {
           label="Tokens for Auction"
           value={
             totalSupply !== undefined
-              ? `${formatUnits(totalSupply, tDec)} ${tokenSymbol ?? ""}`
+              ? `${formatCompactNumber(formatUnits(totalSupply, tDec))} ${tokenSymbol ?? ""}`
               : "--"
           }
         />
         <MetricCard
           label="Total Raised"
           value={
-            currencyRaised !== undefined
-              ? `${formatUnits(currencyRaised, cDec)} ${currencySymbol ?? ""}`
+            totalRaisedDisplay !== null
+              ? `${totalRaisedDisplay} ${currencySymbol ?? ""}`
               : "--"
           }
+          subtitle={totalRaisedDisplay ? toUsdSubtitle(totalRaisedDisplay, usdPrice) : null}
         />
         <MetricCard
           label="Floor Price"
           value={
-            floorPrice !== undefined
-              ? `${q96PriceToDisplay(floorPrice, tDec, cDec)} ${currencySymbol ?? ""}`
+            floorPriceDisplay !== null
+              ? `${floorPriceDisplay} ${currencySymbol ?? ""}`
               : "--"
           }
+          subtitle={floorPriceDisplay ? toUsdSubtitle(floorPriceDisplay, usdPrice) : null}
         />
         <MetricCard
           label={phase >= CCAPhase.ENDED ? "Last Clearing Price" : "Clearing Price"}
           value={
-            clearingPrice !== undefined && phase !== CCAPhase.COMING_SOON
-              ? `${q96PriceToDisplay(clearingPrice, tDec, cDec)} ${currencySymbol ?? ""}`
+            clearingPriceDisplay !== null
+              ? `${clearingPriceDisplay} ${currencySymbol ?? ""}`
               : "--"
           }
+          subtitle={clearingPriceDisplay ? toUsdSubtitle(clearingPriceDisplay, usdPrice) : null}
         />
       </div>
     </div>
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function MetricCard({ label, value, subtitle }: { label: string; value: string; subtitle?: string | null }) {
   return (
     <div className="bg-card rounded-2xl border border-border p-4 shadow-sm">
       <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
@@ -119,6 +143,11 @@ function MetricCard({ label, value }: { label: string; value: string }) {
       <div className="text-sm lg:text-base font-bold text-foreground font-mono truncate">
         {value}
       </div>
+      {subtitle && (
+        <div className="text-xs text-muted-foreground font-mono mt-0.5">
+          {subtitle}
+        </div>
+      )}
     </div>
   );
 }

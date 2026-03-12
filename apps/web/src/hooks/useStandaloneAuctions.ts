@@ -173,6 +173,7 @@ export function useStandaloneAuctions(extraAddresses?: { address: Address; chain
         tokenDecimals: tokenMeta?.decimals,
         currencySymbol: currencyMeta?.symbol,
         currencyDecimals: currencyMeta?.decimals,
+        paymentToken: a.currency,
       };
     });
   }, [baseAuctions, metaMap]);

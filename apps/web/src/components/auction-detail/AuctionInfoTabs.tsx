@@ -6,7 +6,7 @@ import { formatUnits } from "viem";
 import { InfoRow } from "@/components/InfoRow";
 import type { UseCCADataReturn } from "@/hooks/useCCAData";
 import { blocksToTimeEstimate, q96PriceToDisplay } from "@/lib/q96";
-import { ZERO_ADDRESS } from "@/lib/utils";
+import { formatCompactNumber, ZERO_ADDRESS } from "@/lib/utils";
 
 type TabId = "auction-details" | "how-it-works" | "token-overview";
 
@@ -136,7 +136,7 @@ export function AuctionInfoTabs({ data }: AuctionInfoTabsProps) {
                   label="Tokens for Auction"
                   value={
                     totalSupply !== undefined
-                      ? `${formatUnits(totalSupply, tDec)} ${tokenSymbol ?? ""}`
+                      ? `${formatCompactNumber(formatUnits(totalSupply, tDec))} ${tokenSymbol ?? ""}`
                       : "..."
                   }
                 />
@@ -144,7 +144,7 @@ export function AuctionInfoTabs({ data }: AuctionInfoTabsProps) {
                   label="Floor Price"
                   value={
                     floorPrice !== undefined
-                      ? `${q96PriceToDisplay(floorPrice, tDec, cDec)} ${currencySymbol ?? ""}`
+                      ? `${q96PriceToDisplay(floorPrice, tDec, cDec)} ${currencySymbol ?? (currencyAddress === ZERO_ADDRESS ? "ETH" : "")}`
                       : "..."
                   }
                 />
@@ -160,14 +160,20 @@ export function AuctionInfoTabs({ data }: AuctionInfoTabsProps) {
                 <InfoRow
                   label="Start Block"
                   value={startBlock !== undefined ? startBlock.toString() : "..."}
+                  isBlock={startBlock !== undefined}
+                  explorerUrl={explorerUrl}
                 />
                 <InfoRow
                   label="End Block"
                   value={endBlock !== undefined ? endBlock.toString() : "..."}
+                  isBlock={endBlock !== undefined}
+                  explorerUrl={explorerUrl}
                 />
                 <InfoRow
                   label="Claim Block"
                   value={claimBlock !== undefined ? claimBlock.toString() : "..."}
+                  isBlock={claimBlock !== undefined}
+                  explorerUrl={explorerUrl}
                 />
                 {startBlock !== undefined && endBlock !== undefined && (
                   <InfoRow
@@ -364,7 +370,7 @@ export function AuctionInfoTabs({ data }: AuctionInfoTabsProps) {
                     label="Total Supply"
                     value={
                       totalSupply !== undefined
-                        ? `${formatUnits(totalSupply, tDec)} ${tokenSymbol ?? ""}`
+                        ? `${formatCompactNumber(formatUnits(totalSupply, tDec))} ${tokenSymbol ?? ""}`
                         : "..."
                     }
                   />

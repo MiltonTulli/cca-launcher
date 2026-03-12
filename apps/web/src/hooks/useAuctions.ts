@@ -228,6 +228,7 @@ export function useAuctions(overrideChainId?: number) {
         tokenDecimals: tokenMeta?.decimals,
         currencySymbol: currencyMeta?.symbol,
         currencyDecimals: currencyMeta?.decimals,
+        paymentToken: a.paymentToken,
       };
     });
   }, [baseAuctions, metaMap, ccaResults, chainId]);

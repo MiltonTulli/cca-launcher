@@ -64,9 +64,28 @@ export function formatBps(bps: bigint | number): string {
   return `${(Number(bps) / 100).toFixed(2)}%`;
 }
 
-export function getExplorerUrl(chainId: number, type: "address" | "tx", hash: string): string {
+export function getExplorerUrl(chainId: number, type: "address" | "tx" | "block", value: string): string {
   const base = EXPLORER_URLS[chainId] || "https://etherscan.io";
-  return `${base}/${type}/${hash}`;
+  return `${base}/${type}/${value}`;
+}
+
+/** Format a large number in compact human-readable form (e.g. 10000000 → "10M") */
+export function formatCompactNumber(value: string | number): string {
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (isNaN(num) || num === 0) return "0";
+
+  const abs = Math.abs(num);
+  if (abs >= 1_000_000_000) return `${(num / 1_000_000_000).toLocaleString("en-US", { maximumFractionDigits: 2 })}B`;
+  if (abs >= 1_000_000) return `${(num / 1_000_000).toLocaleString("en-US", { maximumFractionDigits: 2 })}M`;
+  if (abs >= 1_000) return `${(num / 1_000).toLocaleString("en-US", { maximumFractionDigits: 2 })}K`;
+  return num.toLocaleString("en-US", { maximumFractionDigits: 4 });
+}
+
+export function formatUsd(amount: number): string {
+  if (amount >= 1)
+    return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (amount >= 0.01) return `$${amount.toFixed(2)}`;
+  return `$${amount.toPrecision(3)}`;
 }
 
 export function timeAgo(timestamp: number): string {

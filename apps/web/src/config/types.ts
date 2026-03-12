@@ -272,4 +272,5 @@ export interface AuctionEntry {
   tokenDecimals?: number;
   currencySymbol?: string;
   currencyDecimals?: number;
+  paymentToken?: Address;
 }
