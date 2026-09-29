@@ -46,7 +46,10 @@ export const networks: [AppKitNetwork, ...AppKitNetwork[]] =
     : [sepolia];
 
 const transports = Object.fromEntries(
-  networks.map((net) => [net.id, http(PUBLIC_RPCS[net.id])]),
+  networks.map((net) => {
+    const chainId = Number(net.id);
+    return [chainId, http(PUBLIC_RPCS[chainId])];
+  }),
 ) as Record<number, ReturnType<typeof http>>;
 
 // Create wagmi adapter
