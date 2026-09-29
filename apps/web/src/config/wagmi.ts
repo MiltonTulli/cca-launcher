@@ -3,6 +3,7 @@ import { arbitrum, arbitrumSepolia, baseSepolia, mainnet, sepolia } from "@reown
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { cookieStorage, createStorage, http } from "@wagmi/core";
 import { DEPLOYED_CHAIN_IDS } from "@launcher/sdk";
+import { STANDALONE_CCA_ADDRESSES } from "@/config/addresses";
 
 // Get projectId from https://cloud.reown.com
 export const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || "demo";
@@ -20,18 +21,32 @@ const ALL_NETWORKS: Record<number, AppKitNetwork> = {
   [baseSepolia.id]: baseSepolia,
 };
 
-/** Only networks with a deployed LaunchFactory */
-const deployedNetworks = DEPLOYED_CHAIN_IDS
+/** Public RPCs so multi-chain reads work without a WalletConnect project ID */
+const PUBLIC_RPCS: Record<number, string> = {
+  [mainnet.id]: "https://ethereum.publicnode.com",
+  [sepolia.id]: "https://ethereum-sepolia-rpc.publicnode.com",
+  [arbitrum.id]: "https://arb1.arbitrum.io/rpc",
+  [arbitrumSepolia.id]: "https://sepolia-rollup.arbitrum.io/rpc",
+  [baseSepolia.id]: "https://sepolia.base.org",
+};
+
+/** Chains needed for wallet + viewing standalone auctions */
+const viewChainIds = new Set<number>([
+  ...DEPLOYED_CHAIN_IDS,
+  ...Object.keys(STANDALONE_CCA_ADDRESSES).map(Number),
+]);
+
+const viewNetworks = [...viewChainIds]
   .map((id) => ALL_NETWORKS[id])
-  .filter(Boolean);
+  .filter((net): net is AppKitNetwork => Boolean(net));
 
-export const networks: [AppKitNetwork, ...AppKitNetwork[]] = deployedNetworks.length > 0
-  ? [deployedNetworks[0], ...deployedNetworks.slice(1)]
-  : [sepolia]; // fallback
+export const networks: [AppKitNetwork, ...AppKitNetwork[]] =
+  viewNetworks.length > 0
+    ? [viewNetworks[0], ...viewNetworks.slice(1)]
+    : [sepolia];
 
-// Build transports only for deployed networks
 const transports = Object.fromEntries(
-  deployedNetworks.map((net) => [net.id, http()])
+  networks.map((net) => [net.id, http(PUBLIC_RPCS[net.id])]),
 ) as Record<number, ReturnType<typeof http>>;
 
 // Create wagmi adapter

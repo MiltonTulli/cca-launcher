@@ -1,23 +1,8 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-function XIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-label="X (Twitter)">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  );
-}
 
 function GitHubIcon({ className }: { className?: string }) {
   return (
@@ -28,13 +13,8 @@ function GitHubIcon({ className }: { className?: string }) {
 }
 
 const LINKS = {
-  terms: "https://terms.tally.xyz/",
-  privacy: "https://www.iubenda.com/privacy-policy/20084196",
-  docs: "https://docs.tally.xyz",
-  blog: "https://tally.mirror.xyz/",
-  status: "https://status.tally.xyz",
-  twitter: "https://twitter.com/tallyxyz",
-  github: "https://github.com/withtally",
+  uniswapCca: "https://cca.uniswap.org/",
+  github: "https://github.com/MiltonTulli/cca-launcher",
 };
 
 export function Footer() {
@@ -45,70 +25,38 @@ export function Footer() {
     setMounted(true);
   }, []);
 
-  const logoSrc = mounted && resolvedTheme === "dark" ? "/tally-dark.svg" : "/tally.svg";
+  const logoSrc = mounted && resolvedTheme === "dark" ? "/tullim-logo-dark.svg" : "/tullim-logo.svg";
 
   return (
     <footer className="border-t border-border bg-background mt-auto">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         {/* Desktop */}
         <div className="hidden md:flex items-center justify-between h-14">
-          <div className="flex items-center gap-4">
-            <Image src={logoSrc} alt="Tally" width={100} height={23} className="h-5 w-auto" />
-            <span className="text-xs text-muted-foreground">&copy; 2025 Tally</span>
+          <div className="flex items-center gap-3">
+            <Image src={logoSrc} alt="tullim" width={28} height={28} className="h-7 w-7" />
+            <span className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} tullim</span>
           </div>
 
           <nav className="flex items-center gap-6">
             <a
-              href={LINKS.terms}
+              href={LINKS.uniswapCca}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Terms of Service
+              Uniswap CCA
             </a>
             <a
-              href={LINKS.privacy}
+              href={LINKS.github}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Privacy Policy
+              GitHub
             </a>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors outline-none">
-                Resources
-                <ChevronDown className="w-3.5 h-3.5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem asChild>
-                  <a href={LINKS.docs} target="_blank" rel="noopener noreferrer">
-                    Documentation
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <a href={LINKS.blog} target="_blank" rel="noopener noreferrer">
-                    Blog
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <a href={LINKS.status} target="_blank" rel="noopener noreferrer">
-                    System status
-                  </a>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </nav>
 
           <div className="flex items-center gap-4">
-            <a
-              href={LINKS.twitter}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="X (Twitter)"
-            >
-              <XIcon className="w-4 h-4" />
-            </a>
             <a
               href={LINKS.github}
               target="_blank"
@@ -124,16 +72,15 @@ export function Footer() {
         {/* Mobile */}
         <div className="md:hidden py-4">
           <div className="flex items-center justify-between">
-            <Image src={logoSrc} alt="Tally" width={88} height={20} className="h-4 w-auto" />
+            <Image src={logoSrc} alt="tullim" width={24} height={24} className="h-6 w-6" />
             <div className="flex items-center gap-4">
               <a
-                href={LINKS.twitter}
+                href={LINKS.uniswapCca}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="X (Twitter)"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                <XIcon className="w-4 h-4" />
+                Uniswap CCA
               </a>
               <a
                 href={LINKS.github}
@@ -144,32 +91,11 @@ export function Footer() {
               >
                 <GitHubIcon className="w-4 h-4" />
               </a>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors outline-none">
-                  Links
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <a href={LINKS.docs} target="_blank" rel="noopener noreferrer">
-                      Documentation
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href={LINKS.blog} target="_blank" rel="noopener noreferrer">
-                      Blog
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href={LINKS.status} target="_blank" rel="noopener noreferrer">
-                      System status
-                    </a>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
-          <span className="text-xs text-muted-foreground mt-2 block">&copy; 2025 Tally</span>
+          <span className="text-xs text-muted-foreground mt-2 block">
+            &copy; {new Date().getFullYear()} tullim
+          </span>
         </div>
       </div>
     </footer>

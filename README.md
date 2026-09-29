@@ -1,6 +1,6 @@
-# Tally Launcher
+# CCA Launcher
 
-A monorepo for the Tally token launch platform on Uniswap V4, including smart contracts, a TypeScript SDK, and a web application.
+A monorepo for Continuous Clearing Auction token launches on Uniswap V4, including smart contracts, a TypeScript SDK, and a web application.
 
 ## Repository Structure
 

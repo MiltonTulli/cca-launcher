@@ -77,7 +77,7 @@ export function LaunchForm({
         </div>
         <CardTitle className="text-2xl">Create Token Launch</CardTitle>
         <CardDescription>
-          Configure and deploy your token launch using TallyLaunchFactory
+          Configure and deploy your token launch using Continuous Clearing Auctions
         </CardDescription>
       </CardHeader>
 

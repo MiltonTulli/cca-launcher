@@ -108,7 +108,7 @@ export function LaunchDetail({ launchAddress, chainId }: LaunchDetailProps) {
           <div className="mt-2">
             <ShareBar
               url={typeof window !== "undefined" ? `${window.location.origin}/launches/${launchAddress}?chain=${resolvedChainId}` : ""}
-              text={`Check out Launch #${launchData.launchId.toString()} on Tally Launch`}
+              text={`Check out Launch #${launchData.launchId.toString()} on CCA Launcher`}
             />
           </div>
         </div>

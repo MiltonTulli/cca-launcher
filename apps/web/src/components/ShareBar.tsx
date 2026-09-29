@@ -11,7 +11,7 @@ interface ShareBarProps {
   text?: string;
 }
 
-const DEFAULT_TEXT = "Check out this token launch on Tally Launch";
+const DEFAULT_TEXT = "Check out this token launch on CCA Launcher";
 
 export function ShareBar({ url, text }: ShareBarProps) {
   const [copied, setCopied] = useState(false);
