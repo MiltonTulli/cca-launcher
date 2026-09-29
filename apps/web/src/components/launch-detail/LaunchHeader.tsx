@@ -75,7 +75,7 @@ export function LaunchHeader({
             url={
               typeof window !== "undefined" ? `${window.location.origin}/launches/${address}` : ""
             }
-            text={`Check out Launch #${launchInfo.launchId.toString()} on Tally Launch`}
+            text={`Check out Launch #${launchInfo.launchId.toString()} on CCA Launcher`}
           />
         </div>
       </div>

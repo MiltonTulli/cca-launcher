@@ -5,8 +5,7 @@ import { TALLY_LAUNCH_FACTORY_ADDRESSES } from "@/config/contracts";
 import { useViewChain } from "@/context/ViewChainProvider";
 import { getExplorerUrl, shortenAddress, ZERO_ADDRESS } from "@/lib/utils";
 
-const FACTORY_SOURCE_URL =
-  "https://github.com/withtally/orchestrator/blob/main/orchestrator/src/TallyLaunchFactory.sol";
+const FACTORY_SOURCE_URL = "https://github.com/MiltonTulli/cca-launcher";
 
 export function FactoryBanner() {
   const { viewChainId: chainId } = useViewChain();
@@ -17,7 +16,7 @@ export function FactoryBanner() {
   return (
     <div className="flex items-center gap-2.5 rounded-lg border bg-muted/50 px-4 py-2.5 flex-wrap">
       <Factory className="h-4 w-4 text-muted-foreground shrink-0" />
-      <span className="text-xs text-muted-foreground">TallyLaunchFactory:</span>
+      <span className="text-xs text-muted-foreground">Launch Factory:</span>
       <a
         href={getExplorerUrl(chainId, "address", address)}
         target="_blank"

@@ -311,7 +311,7 @@ export function DraftView({ id }: DraftViewProps) {
       {/* Share + Comments */}
       <div className="mt-6 space-y-6">
         <div className="flex items-center justify-between">
-          <ShareBar url={shareUrl} text="Check out this token launch draft on Tally Launch" />
+          <ShareBar url={shareUrl} text="Check out this token launch draft on CCA Launcher" />
         </div>
         <CommentsSection resourceType="draft" resourceId={id} />
       </div>

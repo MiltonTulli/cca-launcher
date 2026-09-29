@@ -404,7 +404,7 @@ export function LaunchWizard() {
               </div>
               <ShareBar
                 url={draftShareUrl}
-                text="Check out this token launch draft on Tally Launch"
+                text="Check out this token launch draft on CCA Launcher"
               />
             </div>
           )}

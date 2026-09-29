@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tally Launch | Token Launch Platform",
-  description: "Launch tokens with TallyLaunchFactory on Uniswap V4",
+  title: "CCA Launcher | Token Launch Platform",
+  description: "Launch tokens with Continuous Clearing Auctions on Uniswap V4",
   icons: {
     icon: "/favicon.svg",
   },

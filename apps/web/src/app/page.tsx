@@ -16,7 +16,7 @@ export default function HomePage() {
     setMounted(true);
   }, []);
 
-  const logoSrc = mounted && resolvedTheme === "dark" ? "/tally-dark.svg" : "/tally.svg";
+  const logoSrc = mounted && resolvedTheme === "dark" ? "/tullim-logo-dark.svg" : "/tullim-logo.svg";
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -26,10 +26,10 @@ export default function HomePage() {
           <Link href="/" className="flex items-center">
             <Image
               src={logoSrc}
-              alt="Tally Launch"
-              width={100}
-              height={23}
-              className="h-6 w-auto"
+              alt="tullim"
+              width={32}
+              height={32}
+              className="h-8 w-8"
               priority
             />
           </Link>

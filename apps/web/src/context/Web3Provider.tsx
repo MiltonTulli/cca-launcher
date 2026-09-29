@@ -13,10 +13,10 @@ const queryClient = new QueryClient();
 
 // Set up metadata
 const metadata = {
-  name: "Tally Launch",
-  description: "Launch tokens with TallyLaunchFactory on Uniswap V4",
-  url: "https://tally.xyz",
-  icons: ["https://avatars.githubusercontent.com/u/72100821"],
+  name: "CCA Launcher",
+  description: "Launch tokens with Continuous Clearing Auctions on Uniswap V4",
+  url: "https://github.com/MiltonTulli/cca-launcher",
+  icons: ["https://cca.uniswap.org/favicon.ico"],
 };
 
 // Create modal

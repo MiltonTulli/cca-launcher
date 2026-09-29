@@ -45,12 +45,13 @@ export const TALLY_LAUNCH_FACTORY_ADDRESSES: Record<number, Address> = {
 // STANDALONE CCA ADDRESSES (not deployed via factory)
 // ============================================
 export const STANDALONE_CCA_ADDRESSES: Record<number, Address[]> = {
-  // 1: [
-  //   "0x608c4e792C65f5527B3f70715deA44d3b302F4Ee",
-  // ],
-  // 11155111: [
-  //   "0xbb71fd55c54a25087ede35a8068402d8c9062187",
-  // ],
+  1: [
+    "0xddb66737e2a2f3952765d51296e9112223fb5a4f",
+  ],
+  42161: [
+    "0xc27f8a94df88c4f57b09067e07ea6bc11ca47e11",
+    "0x9edb12f2f0fd79dafdc71a72b4d40595554b3e0e",
+  ],
 };
 
 /** All chain IDs we support in the UI (regardless of deployment status). */

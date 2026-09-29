@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setMounted(true);
   }, []);
 
-  const logoSrc = mounted && resolvedTheme === "dark" ? "/tally-dark.svg" : "/tally.svg";
+  const logoSrc = mounted && resolvedTheme === "dark" ? "/tullim-logo-dark.svg" : "/tullim-logo.svg";
 
   const navItems: NavItem[] = [
     { label: "Auctions", href: "/auctions", icon: ShoppingCart },
@@ -55,13 +55,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           {/* Left: Logo + Nav */}
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center shrink-0">
+            <Link href="/" className="flex items-center shrink-0 gap-2">
               <Image
                 src={logoSrc}
-                alt="Tally"
-                width={100}
-                height={23}
-                className="h-6 w-auto"
+                alt="tullim"
+                width={32}
+                height={32}
+                className="h-8 w-8"
                 priority
               />
             </Link>
